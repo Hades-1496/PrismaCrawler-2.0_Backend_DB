@@ -3,15 +3,15 @@
 Este documento sirve para anotar el estado del proyecto y asegurar que llegamos a la entrega a tiempo.
 
 ## Día 1-2: Setup y Fundamentos
-- [ ] Instalación de Go y configuración del proyecto (`go mod init`).
-- [ ] Creación del proyecto en Supabase y obtención de credenciales de PostgreSQL.
-- [ ] Conexión a la base de datos desde Go usando GORM o Ent.
+- [x] Instalación de Go y configuración del proyecto (`go mod init`).
+- [x] Creación del proyecto en Supabase y obtención de credenciales de PostgreSQL.
+- [x] Conexión a la base de datos desde Go usando GORM o Ent.
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 3-4: Entidades e Infraestructura
 - [ ] Creación de los modelos (Users, Characters, Items, Game_Runs, Run_Inventory).
 - [ ] Ejecutar las migraciones automáticas hacia Supabase.
-- [ ] Levantar el servidor HTTP básico con el framework Gin.
+- [x] Levantar el servidor HTTP básico con el framework Gin.
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 5-6: Autenticación y Usuarios

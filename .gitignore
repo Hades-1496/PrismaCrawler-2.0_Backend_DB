@@ -1,0 +1,7 @@
+# Secretos y Variables de Entorno (¡NUNCA SUBIR EL .env!)
+.env
+
+# Binarios compilados de Go
+*.exe
+*.out
+/bin/

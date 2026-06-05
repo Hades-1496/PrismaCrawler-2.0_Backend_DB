@@ -16,6 +16,12 @@ Para cumplir con los plazos (10 días) y asegurar la mejor experiencia de desarr
 - **ORM (Equivalente a Prisma)**: [Ent](https://entgo.io/) (Desarrollado por Facebook, utiliza generación de código y esquemas basados en grafos, muy similar a Prisma) o alternativamente **GORM** para una curva de aprendizaje más rápida.
 - **Autenticación**: JWT / Supabase Auth.
 
+### 📦 Dependencias Integradas
+Hasta el momento se han añadido al proyecto:
+- `github.com/gin-gonic/gin` para el servidor y enrutamiento HTTP.
+- `github.com/joho/godotenv` para cargar variables de entorno seguras.
+- `gorm.io/gorm` y `gorm.io/driver/postgres` para la conexión y el ORM de la base de datos.
+
 ## 🧠 Decisiones Arquitectónicas y Consideraciones (Para el Equipo)
 
 Al tener un tiempo límite de **10 días** y ser una primera toma de contacto con Go, hemos definido las siguientes directrices:
@@ -89,10 +95,22 @@ Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas pri
   - Guardar el progreso / piso actual (`PUT /runs/{id}/save`).
   - Morir / Finalizar partida (`POST /runs/{id}/die`).
 
+## 🗃️ Archivo `.gitignore`
+Antes de hacer un commit, asegúrate de tener un archivo `.gitignore` en la raíz del proyecto para no exponer secretos ni subir código compilado:
+```text
+# Secretos y Variables de Entorno (¡NUNCA SUBIR EL .env!)
+.env
+
+# Binarios compilados de Go
+*.exe
+*.out
+/bin/
+```
+
 ## 🚀 Instalación y Ejecución
 
 1. Clonar el repositorio.
-2. Renombrar `.env.example` a `.env` y configurar la URL de Supabase.
+2. Renombrar `.env.example` a `.env` y configurar la `DATABASE_URL` y el `PORT`.
 3. Instalar dependencias:
    ```bash
    go mod tidy
