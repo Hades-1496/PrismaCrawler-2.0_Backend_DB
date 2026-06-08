@@ -1,8 +1,9 @@
 package db
 
-
 import (
 	"log"
+	"prismacrawler/internal/models"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -18,4 +19,8 @@ func ConnectDB(url string) {
 	}
 
 	log.Println("!Conectado a la base de datos exitosamente!")
+
+	// GORM creará/actualizará las tablas basándose en las structs
+	// Migramos los 5 modelos principales del MVP
+	DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Item{}, &models.GameRun{}, &models.RunInventory{})
 }

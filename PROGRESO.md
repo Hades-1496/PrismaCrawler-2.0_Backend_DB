@@ -2,6 +2,12 @@
 
 Este documento sirve para anotar el estado del proyecto y asegurar que llegamos a la entrega a tiempo.
 
+## 🔄 Tareas de Migración (De JS a Go)
+- [ ] Migrar la lógica de Autenticación (JWT/Supabase) de JS a Go.
+- [ ] Migrar las rutas (endpoints) de usuarios e inventarios usando Gin.
+- [ ] Traducir los servicios (lógica de negocio) de JS a Go.
+- [ ] Adaptar los modelos de GORM para que coincidan con las tablas creadas originalmente por Prisma/JS.
+
 ## Día 1-2: Setup y Fundamentos
 - [x] Instalación de Go y configuración del proyecto (`go mod init`).
 - [x] Creación del proyecto en Supabase y obtención de credenciales de PostgreSQL.
@@ -9,8 +15,8 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 3-4: Entidades e Infraestructura
-- [ ] Creación de los modelos (Users, Characters, Items, Game_Runs, Run_Inventory).
-- [ ] Ejecutar las migraciones automáticas hacia Supabase.
+- [x] Creación de los modelos (Users, Characters, Items, Game_Runs, Run_Inventory).
+- [x] Ejecutar las migraciones automáticas hacia Supabase.
 - [x] Levantar el servidor HTTP básico con el framework Gin.
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
