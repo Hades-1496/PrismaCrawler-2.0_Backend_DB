@@ -1,8 +1,7 @@
 package main
 
 import (
-	"log" // Mirar diferencias entre log y fmt
-	"net/http"
+	"log"
 	"os"
 	"prismacrawler/internal/handlers"
 	"prismacrawler/internal/middlewares"
@@ -36,7 +35,6 @@ func main() {
 	router := gin.Default()
 
 	// CORS — permite al frontend (y al AI backend) llamar desde cualquier origen local
-	// En producción sustituir "*" por el dominio real
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	origins := []string{"http://localhost:3000", "http://localhost:8001"}
 	if allowedOrigins != "" {
@@ -53,7 +51,6 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	router.GET("/ping", getting)
 
 	authGroup := router.Group("/auth")
 	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
@@ -75,12 +72,12 @@ func main() {
 		apiGroup.GET("/items", handlers.GetItems)
 	}
 
+	// Grupo de rutas de Administración (Doble protección: Auth + Admin)
+	adminGroup := apiGroup.Group("/admin")
+	adminGroup.Use(middlewares.AdminMiddleware())
+	{
+		adminGroup.PUT("/role", handlers.UpdateRole)
+	}
+
 	router.Run(":" + PORT)
 }
-
-// Controller?
-func getting(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"method": "GET"})
-}
-
-// Objetivos adicionales: Dividir el archivo en varios como routes, controllers, utils, services...

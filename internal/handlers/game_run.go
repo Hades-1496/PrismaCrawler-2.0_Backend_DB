@@ -22,8 +22,7 @@ func StartRun(c *gin.Context) {
 		return
 	}
 
-	userIDValue, _ := c.Get("userID")
-	userID := uint(userIDValue.(float64))
+	userID := utils.GetUserID(c)
 
 	// 1. Verificar que el personaje existe, pertenece al usuario y está vivo
 	var character models.Character
@@ -66,8 +65,7 @@ func SaveRun(c *gin.Context) {
 		return
 	}
 
-	userIDValue, _ := c.Get("userID")
-	userID := uint(userIDValue.(float64))
+	userID := utils.GetUserID(c)
 
 	var run models.GameRun
 	// Preload("Character") es como el 'include: { character: true }' de Prisma
@@ -86,18 +84,8 @@ func SaveRun(c *gin.Context) {
 		return
 	}
 
-	// Actualizamos los datos
-	run.CurrentFloor = req.CurrentFloor
-	run.Score = req.Score
-
-	// Comprobamos si ha muerto
-	if req.CurrentHP <= 0 {
-		run.Character.IsAlive = false
-		run.Character.BaseHP = 0
-		run.Status = "Dead"
-	} else {
-		run.Character.BaseHP = req.CurrentHP
-	}
+	// Delegamos la lógica del juego al modelo (Principios SOLID - SRP)
+	run.UpdateState(req.CurrentFloor, req.Score, req.CurrentHP)
 
 	// Guardamos ambos modelos en la base de datos
 	db.DB.Save(&run)

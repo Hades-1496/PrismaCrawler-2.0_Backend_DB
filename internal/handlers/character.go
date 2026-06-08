@@ -26,9 +26,7 @@ func CreateCharacter(c *gin.Context) {
 	}
 
 	// Extraemos el ID del usuario desde el contexto (colocado allí por el AuthMiddleware)
-	// Nota: El JWT guarda los números como float64 por defecto, así que lo convertimos a uint
-	userIDValue, _ := c.Get("userID")
-	userID := uint(userIDValue.(float64))
+	userID := utils.GetUserID(c)
 
 	character := models.Character{
 		UserID: userID,
@@ -47,8 +45,7 @@ func CreateCharacter(c *gin.Context) {
 
 // GetCharacters devuelve la lista de personajes del usuario logueado
 func GetCharacters(c *gin.Context) {
-	userIDValue, _ := c.Get("userID")
-	userID := uint(userIDValue.(float64))
+	userID := utils.GetUserID(c)
 
 	var characters []models.Character
 	// Buscamos todos los personajes que pertenezcan a este usuario

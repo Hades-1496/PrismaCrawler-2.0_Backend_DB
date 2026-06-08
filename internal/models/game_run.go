@@ -19,3 +19,17 @@ type GameRun struct {
 	Character   Character      `gorm:"foreignKey:CharacterID"` // GORM sabrá buscar el personaje
 	Inventories []RunInventory `gorm:"foreignKey:RunID"`       // Una run tiene un inventario asociado
 }
+
+// UpdateState es un método que encapsula la lógica de juego (SRP), calculando daños y muertes
+func (r *GameRun) UpdateState(floor int, score int, currentHP int) {
+	r.CurrentFloor = floor
+	r.Score = score
+
+	if currentHP <= 0 {
+		r.Character.IsAlive = false
+		r.Character.BaseHP = 0
+		r.Status = "Dead"
+	} else {
+		r.Character.BaseHP = currentHP
+	}
+}

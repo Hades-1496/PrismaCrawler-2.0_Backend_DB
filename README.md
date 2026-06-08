@@ -63,6 +63,7 @@ Esta versión en Go no es solo una traducción del código anterior en Node.js/E
 3. **Mapas Procedurales (Semillas)**: Eliminamos la tabla estática de mapas con ASCII. Ahora se genera una **Semilla (Seed)** aleatoria por partida que el frontend (Phaser) utilizará para generar laberintos infinitos y únicos.
 4. **Gestión de Inventario**: En lugar de un simple catálogo visual, el backend ahora rastrea en la base de datos qué objetos lleva equipados cada personaje en su partida actual mediante `run_inventory`.
 5. **Rendimiento (El Motor)**: Pasamos de un entorno de un solo hilo (Node.js) a un entorno compilado y multihilo (Go), capaz de manejar miles de peticiones de guardado simultáneas sin cuellos de botella.
+6. **Código Limpio (Clean Code)**: Aplicación de principios DRY, YAGNI, KISS y SRP (SOLID), extrayendo la lógica del juego a métodos de los modelos y estandarizando el manejo de errores.
 
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
 
@@ -95,6 +96,13 @@ PrismaCrawler/
 - GET /api/characters: Obtiene la lista de personajes del usuario activo.
 - POST /api/runs/start: Inicia una partida, verificando que el personaje esté vivo, y genera la Seed procedural.
 - PUT /api/runs/save: Actualiza el progreso de la partida (piso, score, vida restante) o mata al personaje si HP <= 0.
+- GET /api/profile: Obtiene los datos del usuario logueado y su Top 5 de mejores partidas.
+- GET /api/leaderboard: Devuelve el Top 10 de mejores partidas globales.
+- GET /api/items: Devuelve el catálogo completo de objetos del juego.
+
+### Administración (Protegidas por JWT y Rol ADMIN en /api/admin):
+
+- PUT /api/admin/role: Cambia el rol de un usuario (requiere `user_id` y `role`).
 ## 🗄️ Esquema de Base de Datos (Core 5 Tablas)
 Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas principales:
 

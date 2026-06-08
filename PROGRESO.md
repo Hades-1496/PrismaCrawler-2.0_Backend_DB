@@ -34,7 +34,7 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
 
 ## Día 9-10: Pulido, Testeo y Entrega
 - [x] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500). *(Helper de errores creado)*
-- [x] Refactorización mediante KISS, DRY, YAGNI, SOLID... *(Aplicado DRY en handlers)*
+- [x] Refactorización mediante KISS, DRY, YAGNI, SOLID... *(Aplicado DRY y SRP. Repository Pattern descartado por YAGNI)*
 - [x] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth). *(Rate Limiter implementado)*
 - [ ] Repaso para el correcto funcionamiento en un servidor linux (para el uso correcto del Deploy)
 - [ ] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
