@@ -7,7 +7,10 @@ import (
 	"prismacrawler/internal/handlers"
 	"prismacrawler/internal/middlewares"
 	"prismacrawler/pkg/db"
+	"strings"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -25,6 +28,24 @@ func main() {
 	db.ConnectDB(os.Getenv("DATABASE_URL"))
 	// Routes
 	router := gin.Default()
+
+	// CORS — permite al frontend (y al AI backend) llamar desde cualquier origen local
+	// En producción sustituir "*" por el dominio real
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	origins := []string{"http://localhost:3000", "http://localhost:8001"}
+	if allowedOrigins != "" {
+		for _, o := range strings.Split(allowedOrigins, ",") {
+			origins = append(origins, strings.TrimSpace(o))
+		}
+	}
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     origins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	router.GET("/ping", getting)
 
