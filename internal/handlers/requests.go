@@ -27,6 +27,9 @@ type SaveRunRequest struct {
 	CurrentFloor int  `json:"current_floor" binding:"required"`
 	Score        int  `json:"score"`
 	CurrentHP    int  `json:"current_hp"`
+	Kills        int  `json:"kills"`
+	DamageDealt  int  `json:"damage_dealt"`
+	DamageTaken  int  `json:"damage_taken"`
 }
 
 // --- USUARIOS / ADMIN ---

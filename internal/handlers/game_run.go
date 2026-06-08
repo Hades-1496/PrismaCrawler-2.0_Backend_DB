@@ -72,7 +72,7 @@ func SaveRun(c *gin.Context) {
 	}
 
 	// Delegamos la lógica del juego al modelo (Principios SOLID - SRP)
-	run.UpdateState(req.CurrentFloor, req.Score, req.CurrentHP)
+	run.UpdateState(req.CurrentFloor, req.Score, req.CurrentHP, req.Kills, req.DamageDealt, req.DamageTaken)
 
 	// Guardamos ambos modelos en la base de datos
 	db.DB.Save(&run)
@@ -102,11 +102,14 @@ func GetLeaderboard(c *gin.Context) {
 	var leaderboard []gin.H
 	for _, run := range runs {
 		leaderboard = append(leaderboard, gin.H{
-			"character": run.Character.Name,
-			"class":     run.Character.Class,
-			"score":     run.Score,
-			"floor":     run.CurrentFloor,
-			"status":    run.Status,
+			"character":    run.Character.Name,
+			"class":        run.Character.Class,
+			"score":        run.Score,
+			"floor":        run.CurrentFloor,
+			"kills":        run.Kills,
+			"damage_dealt": run.DamageDealt,
+			"damage_taken": run.DamageTaken,
+			"status":       run.Status,
 		})
 	}
 

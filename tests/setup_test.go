@@ -13,15 +13,18 @@ import (
 // SetupTestRouter configura Gin y una base de datos aislada para los tests
 func SetupTestRouter() *gin.Engine {
 	// 1. Cargamos el .env desde el directorio padre (la raíz)
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("../.env.test")
 	if err != nil {
-		log.Println("Aviso: No se encontró archivo .env. Asegúrate de tener las variables configuradas.")
+		log.Println("Aviso: No se encontró archivo .env.test. Asegúrate de tener las variables configuradas.")
 	}
 
 	// 2. Usamos la variable ESPECÍFICA para tests para no borrar la DB real
-	testDBUrl := os.Getenv("TEST_DATABASE_URL")
+	testDBUrl := os.Getenv("DIRECT_URL")
 	if testDBUrl == "" {
-		log.Fatal("¡ALTO! Necesitas definir TEST_DATABASE_URL en tu .env para correr los tests de forma segura.")
+		testDBUrl = os.Getenv("DATABASE_URL")
+	}
+	if testDBUrl == "" {
+		log.Fatal("¡ALTO! Necesitas definir DIRECT_URL o DATABASE_URL en tu .env.test para correr los tests de forma segura.")
 	}
 
 	// 3. Conectamos GORM a la base de datos de test y reconstruimos las tablas
