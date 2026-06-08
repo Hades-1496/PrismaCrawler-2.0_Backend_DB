@@ -28,6 +28,8 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
 ## Día 7-8: Core del Roguelike (Personajes y Runs)
 - [x] Endpoints de creación y selección de personajes.
 - [x] Endpoints para Iniciar una Partida (Run) y guardar el estado actual del calabozo.
+- [ ] Guardado de puntuación al morir.
+- [ ] Mostrar ranking de puntuación con otros jugadores.
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 9-10: Pulido, Testeo y Entrega
