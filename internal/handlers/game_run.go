@@ -89,7 +89,7 @@ func SaveRun(c *gin.Context) {
 	// Actualizamos los datos
 	run.CurrentFloor = req.CurrentFloor
 	run.Score = req.Score
-	
+
 	// Comprobamos si ha muerto
 	if req.CurrentHP <= 0 {
 		run.Character.IsAlive = false
@@ -109,4 +109,31 @@ func SaveRun(c *gin.Context) {
 		"floor":   run.CurrentFloor,
 		"hp":      run.Character.BaseHP,
 	})
+}
+
+// GetLeaderboard devuelve el Top 10 de mejores partidas globales
+func GetLeaderboard(c *gin.Context) {
+	var runs []models.GameRun
+
+	// Buscamos el Top 10 ordenado por Puntuación y luego por Piso.
+	// Preload("Character") trae los datos del héroe para poder mostrar su nombre.
+	db.DB.Preload("Character").
+		Where("score > 0"). // Opcional: ignoramos partidas sin puntuar
+		Order("score desc, current_floor desc").
+		Limit(10).
+		Find(&runs)
+
+	// Mapeamos los datos para enviar un JSON limpio a Phaser
+	var leaderboard []gin.H
+	for _, run := range runs {
+		leaderboard = append(leaderboard, gin.H{
+			"character": run.Character.Name,
+			"class":     run.Character.Class,
+			"score":     run.Score,
+			"floor":     run.CurrentFloor,
+			"status":    run.Status,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"leaderboard": leaderboard})
 }

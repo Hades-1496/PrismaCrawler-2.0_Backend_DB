@@ -38,10 +38,12 @@ func main() {
 	apiGroup := router.Group("/api")
 	apiGroup.Use(middlewares.AuthMiddleware()) // Aplicamos el candado a este grupo
 	{
+		apiGroup.GET("/profile", handlers.GetProfile)
 		apiGroup.POST("/characters", handlers.CreateCharacter)
 		apiGroup.GET("/characters", handlers.GetCharacters)
 		apiGroup.POST("/runs/start", handlers.StartRun)
 		apiGroup.PUT("/runs/save", handlers.SaveRun)
+		apiGroup.GET("/leaderboard", handlers.GetLeaderboard)
 	}
 
 	router.Run(":" + PORT)
