@@ -21,6 +21,8 @@ Hasta el momento se han añadido al proyecto:
 - `github.com/gin-gonic/gin` para el servidor y enrutamiento HTTP.
 - `github.com/joho/godotenv` para cargar variables de entorno seguras.
 - `gorm.io/gorm` y `gorm.io/driver/postgres` para la conexión y el ORM de la base de datos.
+- `golang.org/x/crypto/bcrypt` para la encriptación segura de contraseñas.
+- `github.com/golang-jwt/jwt/v5` para la generación y validación de tokens de sesión.
 
 ## 🧠 Decisiones Arquitectónicas y Consideraciones (Para el Equipo)
 
@@ -51,6 +53,16 @@ El backend no debe sobrecargarse de lógica en tiempo real para esta entrega ini
 **Lo que SÍ haremos (Enfoque Transaccional):**
 - El cliente/frontend maneja el *gameplay* de la mazmorra. Nuestro backend en Go actuará como el "servidor de guardado y validación": Autenticará al usuario, entregará los datos del personaje al inicio de la *Run*, y recibirá actualizaciones del progreso (Ej: "El jugador superó el piso 3, guarda este estado y este nuevo inventario").
 
+## 🌟 Evolución del Proyecto (Node.js vs Go)
+
+Esta versión en Go no es solo una traducción del código anterior en Node.js/Express, sino una **evolución arquitectónica** hacia un verdadero motor de estado persistente:
+
+1. **El Paradigma (De "Arcade" a "Roguelike")**: En JS, el servidor era *stateless* (solo guardaba la puntuación al morir). En Go, el servidor guarda el estado *piso a piso* (`GameRun`), permitiendo continuar la partida si el navegador se cierra.
+2. **Identidad (Cuentas vs Héroes)**: Antes, el `User` era directamente el jugador. Ahora hemos separado la cuenta (`User`) del avatar (`Character`), permitiendo tener múltiples héroes (ej: Mago, Guerrero) en una misma cuenta.
+3. **Mapas Procedurales (Semillas)**: Eliminamos la tabla estática de mapas con ASCII. Ahora se genera una **Semilla (Seed)** aleatoria por partida que el frontend (Phaser) utilizará para generar laberintos infinitos y únicos.
+4. **Gestión de Inventario**: En lugar de un simple catálogo visual, el backend ahora rastrea en la base de datos qué objetos lleva equipados cada personaje en su partida actual mediante `run_inventory`.
+5. **Rendimiento (El Motor)**: Pasamos de un entorno de un solo hilo (Node.js) a un entorno compilado y multihilo (Go), capaz de manejar miles de peticiones de guardado simultáneas sin cuellos de botella.
+
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
 
 Para mantener la simplicidad sin sacrificar el orden, utilizaremos una arquitectura de carpetas estándar en Go:
@@ -61,14 +73,27 @@ PrismaCrawler/
 │   └── api/             # Punto de entrada de la aplicación (main.go)
 ├── internal/
 │   ├── handlers/        # Controladores (HTTP/Gin). Reciben la petición y devuelven JSON
+│   ├── middlewares/     # Interceptores de seguridad (Auth, Rate Limiter)
 │   ├── services/        # Lógica de negocio (Validar que un jugador puede equipar un item)
 │   ├── models/          # Entidades y esquemas (Ent/GORM)
 │   └── repository/      # Capa de acceso a la base de datos (Querys)
-├── pkg/                 # Código reutilizable (Helpers de JWT, Configuración, etc)
+├── pkg/                 # Código reutilizable (Helpers de JWT, Seeds, db, etc)
 ├── go.mod               # Dependencias
 └── README.md
 ```
 
+## 🛣️ Rutas de la API (Endpoints)
+### Autenticación (Públicas):
+
+- POST /auth/register: Registra un nuevo usuario (requiere email y password).
+- POST /auth/login: Inicia sesión y devuelve un token JWT.
+
+### Core del Juego (Protegidas por JWT en /api):
+
+- POST /api/characters: Crea un nuevo personaje (Guerrero, Mago) para el usuario logueado.
+- GET /api/characters: Obtiene la lista de personajes del usuario activo.
+- POST /api/runs/start: Inicia una partida, verificando que el personaje esté vivo, y genera la Seed procedural.
+- PUT /api/runs/save: Actualiza el progreso de la partida (piso, score, vida restante) o mata al personaje si HP <= 0.
 ## 🗄️ Esquema de Base de Datos (Core 5 Tablas)
 Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas principales:
 
@@ -119,3 +144,4 @@ Antes de hacer un commit, asegúrate de tener un archivo `.gitignore` en la raí
    ```bash
    go run cmd/api/main.go
    ```
+ - 💡 Nota sobre el comando: A diferencia de JS donde ejecutas el script de entrada directamente (y herramientas como nodemon lo reinician), go run compila temporalmente toda tu aplicación en memoria y genera un binario para ejecutarla. La ruta cmd/api/main.go apunta a tu archivo principal. Al ser Go un lenguaje compilado, si modificas cualquier archivo .go, deberás detener el servidor en la terminal (Ctrl+C) y volver a ejecutar el comando para aplicar los cambios.
