@@ -12,8 +12,7 @@ import (
 // GetProfile devuelve los datos del usuario y su Top 5 de partidas
 func GetProfile(c *gin.Context) {
 	// 1. Obtener el ID del usuario desde el JWT
-	userIDValue, _ := c.Get("userID")
-	userID := uint(userIDValue.(float64))
+	userID := utils.GetUserID(c)
 
 	// 2. Buscar al usuario
 	var user models.User

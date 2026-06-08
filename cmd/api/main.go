@@ -1,8 +1,7 @@
 package main
 
 import (
-	"log" // Mirar diferencias entre log y fmt
-	"net/http"
+	"log"
 	"os"
 	"prismacrawler/internal/handlers"
 	"prismacrawler/internal/middlewares"
@@ -29,8 +28,6 @@ func main() {
 	db.ConnectDB(dbURL)
 	// Routes
 	router := gin.Default()
-
-	router.GET("/ping", getting)
 
 	authGroup := router.Group("/auth")
 	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
@@ -61,10 +58,3 @@ func main() {
 
 	router.Run(":" + PORT)
 }
-
-// Controller?
-func getting(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"method": "GET"})
-}
-
-// Objetivos adicionales: Dividir el archivo en varios como routes, controllers, utils, services...

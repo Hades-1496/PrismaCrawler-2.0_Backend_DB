@@ -63,6 +63,7 @@ Esta versión en Go no es solo una traducción del código anterior en Node.js/E
 3. **Mapas Procedurales (Semillas)**: Eliminamos la tabla estática de mapas con ASCII. Ahora se genera una **Semilla (Seed)** aleatoria por partida que el frontend (Phaser) utilizará para generar laberintos infinitos y únicos.
 4. **Gestión de Inventario**: En lugar de un simple catálogo visual, el backend ahora rastrea en la base de datos qué objetos lleva equipados cada personaje en su partida actual mediante `run_inventory`.
 5. **Rendimiento (El Motor)**: Pasamos de un entorno de un solo hilo (Node.js) a un entorno compilado y multihilo (Go), capaz de manejar miles de peticiones de guardado simultáneas sin cuellos de botella.
+6. **Código Limpio (Clean Code)**: Aplicación de principios DRY, YAGNI, KISS y SRP (SOLID), extrayendo la lógica del juego a métodos de los modelos y estandarizando el manejo de errores.
 
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
 
