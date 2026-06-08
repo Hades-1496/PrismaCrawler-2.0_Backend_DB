@@ -25,7 +25,13 @@ func main() {
 		PORT = "8000" // Puerto por defecto si se te olvida ponerlo en el .env
 	}
 	log.Printf("Iniciando servidor en el puerto %s...", PORT)
-	db.ConnectDB(os.Getenv("DATABASE_URL"))
+	// DIRECT_URL usa el puerto 5432 (conexión directa), necesario para GORM.
+	// DATABASE_URL usa el pooler pgbouncer (6543) que rompe los prepared statements de GORM.
+	dbURL := os.Getenv("DIRECT_URL")
+	if dbURL == "" {
+		dbURL = os.Getenv("DATABASE_URL")
+	}
+	db.ConnectDB(dbURL)
 	// Routes
 	router := gin.Default()
 
