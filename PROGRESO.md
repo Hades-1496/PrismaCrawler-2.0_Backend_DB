@@ -37,6 +37,6 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
 - [x] Refactorización mediante KISS, DRY, YAGNI, SOLID... *(Aplicado DRY y SRP. Repository Pattern descartado por YAGNI)*
 - [x] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth). *(Rate Limiter implementado)*
 - [ ] Repaso para el correcto funcionamiento en un servidor linux (para el uso correcto del Deploy)
-- [ ] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
+- [x] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
 - [ ] Documentación en Postman para probar la API rápidamente.
 - [ ] Preparar presentación/defensa de la introducción a Go.

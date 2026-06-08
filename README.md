@@ -154,3 +154,9 @@ Antes de hacer un commit, asegúrate de tener un archivo `.gitignore` en la raí
    go run cmd/api/main.go
    ```
  - 💡 Nota sobre el comando: A diferencia de JS donde ejecutas el script de entrada directamente (y herramientas como nodemon lo reinician), go run compila temporalmente toda tu aplicación en memoria y genera un binario para ejecutarla. La ruta cmd/api/main.go apunta a tu archivo principal. Al ser Go un lenguaje compilado, si modificas cualquier archivo .go, deberás detener el servidor en la terminal (Ctrl+C) y volver a ejecutar el comando para aplicar los cambios.
+
+## 🧪 Testing (TDD)
+Para ejecutar la suite de pruebas unitarias y de integración (E2E), asegúrate de haber configurado `TEST_DATABASE_URL` en tu `.env` y ejecuta:
+```bash
+go test ./tests/... -v
+```
