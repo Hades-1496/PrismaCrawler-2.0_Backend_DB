@@ -22,13 +22,18 @@ func main() {
 		PORT = "8000" // Puerto por defecto si se te olvida ponerlo en el .env
 	}
 	log.Printf("Iniciando servidor en el puerto %s...", PORT)
-	db.ConnectDB(os.Getenv("DATABASE_URL"))
+	dbURL := os.Getenv("DIRECT_URL")
+	if dbURL == "" {
+		dbURL = os.Getenv("DATABASE_URL")
+	}
+	db.ConnectDB(dbURL)
 	// Routes
 	router := gin.Default()
 
 	router.GET("/ping", getting)
 
 	authGroup := router.Group("/auth")
+	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
 	{
 		authGroup.POST("/register", handlers.Register)
 		authGroup.POST("/login", handlers.Login)
@@ -44,6 +49,7 @@ func main() {
 		apiGroup.POST("/runs/start", handlers.StartRun)
 		apiGroup.PUT("/runs/save", handlers.SaveRun)
 		apiGroup.GET("/leaderboard", handlers.GetLeaderboard)
+		apiGroup.GET("/items", handlers.GetItems)
 	}
 
 	router.Run(":" + PORT)

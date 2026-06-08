@@ -18,7 +18,7 @@ type StartRunRequest struct {
 func StartRun(c *gin.Context) {
 	var req StartRunRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
 		return
 	}
 
@@ -28,11 +28,11 @@ func StartRun(c *gin.Context) {
 	// 1. Verificar que el personaje existe, pertenece al usuario y está vivo
 	var character models.Character
 	if err := db.DB.Where("id = ? AND user_id = ?", req.CharacterID, userID).First(&character).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Personaje no encontrado o no te pertenece"})
+		utils.SendError(c, http.StatusNotFound, "Personaje no encontrado o no te pertenece")
 		return
 	}
 	if !character.IsAlive {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Este personaje está muerto y no puede iniciar una partida"})
+		utils.SendError(c, http.StatusBadRequest, "Este personaje está muerto y no puede iniciar una partida")
 		return
 	}
 
@@ -43,7 +43,7 @@ func StartRun(c *gin.Context) {
 	}
 
 	if result := db.DB.Create(&run); result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error interno al crear la partida"})
+		utils.SendError(c, http.StatusInternalServerError, "Error interno al crear la partida")
 		return
 	}
 
@@ -62,7 +62,7 @@ type SaveRunRequest struct {
 func SaveRun(c *gin.Context) {
 	var req SaveRunRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
 		return
 	}
 
@@ -72,17 +72,17 @@ func SaveRun(c *gin.Context) {
 	var run models.GameRun
 	// Preload("Character") es como el 'include: { character: true }' de Prisma
 	if err := db.DB.Preload("Character").Where("id = ?", req.RunID).First(&run).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Partida no encontrada"})
+		utils.SendError(c, http.StatusNotFound, "Partida no encontrada")
 		return
 	}
 
 	// Validaciones de seguridad
 	if run.Character.UserID != userID {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "No tienes permiso para modificar esta partida"})
+		utils.SendError(c, http.StatusUnauthorized, "No tienes permiso para modificar esta partida")
 		return
 	}
 	if run.Status != "In_Progress" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "La partida ya ha finalizado"})
+		utils.SendError(c, http.StatusBadRequest, "La partida ya ha finalizado")
 		return
 	}
 
