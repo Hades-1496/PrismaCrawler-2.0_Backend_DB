@@ -95,6 +95,13 @@ PrismaCrawler/
 - GET /api/characters: Obtiene la lista de personajes del usuario activo.
 - POST /api/runs/start: Inicia una partida, verificando que el personaje esté vivo, y genera la Seed procedural.
 - PUT /api/runs/save: Actualiza el progreso de la partida (piso, score, vida restante) o mata al personaje si HP <= 0.
+- GET /api/profile: Obtiene los datos del usuario logueado y su Top 5 de mejores partidas.
+- GET /api/leaderboard: Devuelve el Top 10 de mejores partidas globales.
+- GET /api/items: Devuelve el catálogo completo de objetos del juego.
+
+### Administración (Protegidas por JWT y Rol ADMIN en /api/admin):
+
+- PUT /api/admin/role: Cambia el rol de un usuario (requiere `user_id` y `role`).
 ## 🗄️ Esquema de Base de Datos (Core 5 Tablas)
 Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas principales:
 

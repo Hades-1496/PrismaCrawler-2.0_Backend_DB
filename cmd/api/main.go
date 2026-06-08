@@ -52,6 +52,13 @@ func main() {
 		apiGroup.GET("/items", handlers.GetItems)
 	}
 
+	// Grupo de rutas de Administración (Doble protección: Auth + Admin)
+	adminGroup := apiGroup.Group("/admin")
+	adminGroup.Use(middlewares.AdminMiddleware())
+	{
+		adminGroup.PUT("/role", handlers.UpdateRole)
+	}
+
 	router.Run(":" + PORT)
 }
 
