@@ -3,7 +3,6 @@ package db
 import (
 	"log"
 	"prismacrawler/internal/models"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

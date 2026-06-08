@@ -1,0 +1,89 @@
+package handlers
+
+import (
+	"net/http"
+	"prismacrawler/internal/models"
+	"prismacrawler/pkg/db"
+	"prismacrawler/pkg/utils"
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+)
+
+// RegisterRequest define el JSON que esperamos recibir del frontend
+type RegisterRequest struct {
+	Email    string `json:"email" binding:"required,email"`    // Requiere email
+	Password string `json:"password" binding:"required,min=6"` // Un mínimo de 6 caracteres para la contraseña
+}
+
+// LoginRequest define el JSON que esperamos recibir para iniciar sesión
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+// Register maneja el registro de nuevos usuarios
+func Register(c *gin.Context) {
+	var req RegisterRequest
+
+	// 1. Recibir y validar el JSON
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		return
+	}
+
+	// 2. Encriptar la contraseña
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error interno al procesar la contraseña"})
+		return
+	}
+
+	// 3. Crear el modelo del nuevo usuario
+	user := models.User{
+		Email:        req.Email,
+		PasswordHash: string(hashedPassword),
+	}
+
+	// 4. Guardar en la base de datos
+	result := db.DB.Create(&user)
+	if result.Error != nil {
+		// Como pusimos que Email es "uniqueIndex" en el modelo, GORM fallará si ya existe
+		c.JSON(http.StatusConflict, gin.H{"error": "Este email ya está en uso"})
+		return
+	}
+	// 5. Responder con éxito (HTTP 201 - Created)
+	c.JSON(http.StatusCreated, gin.H{"message": "Usuario registrado exitosamente", "user_id": user.ID})
+}
+
+// Login maneja la autenticación y devuelve un JWT
+func Login(c *gin.Context) {
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		return
+	}
+
+	var user models.User
+	// 1. Buscamos al usuario en base al correo (Equivalente a prisma.user.findUnique)
+	result := db.DB.Where("email = ?", req.Email).First(&user)
+	if result.Error != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciales inválidas"})
+		return
+	}
+
+	// 2. Comparamos la contraseña encriptada (Equivalente a bcrypt.compare)
+	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciales inválidas"})
+		return
+	}
+
+	// 3. Generamos el token JWT
+	token, err := utils.GenerateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error interno al generar el token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token, "user_id": user.ID, "email": user.Email})
+}

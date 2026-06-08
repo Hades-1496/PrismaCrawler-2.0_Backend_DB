@@ -21,16 +21,17 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 5-6: Autenticación y Usuarios
-- [ ] Implementar registro y login de usuarios (Endpoints y lógica).
-- [ ] Generación y validación de tokens JWT.
+- [x] Implementar registro y login de usuarios (Endpoints y lógica).
+- [x] Generación y validación de tokens JWT.
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 7-8: Core del Roguelike (Personajes y Runs)
-- [ ] Endpoints de creación y selección de personajes.
-- [ ] Endpoints para Iniciar una Partida (Run) y guardar el estado actual del calabozo.
+- [x] Endpoints de creación y selección de personajes.
+- [x] Endpoints para Iniciar una Partida (Run) y guardar el estado actual del calabozo.
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 9-10: Pulido, Testeo y Entrega
 - [ ] Documentación en Postman para probar la API rápidamente.
 - [ ] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500).
+- [ ] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth).
 - [ ] Preparar presentación/defensa de la introducción a Go.
