@@ -33,9 +33,9 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
 ## Día 9-10: Pulido, Testeo y Entrega
-- [ ] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500).
-- [ ] Refactorización mediante KISS, DRY, YAGNI, SOLID...
-- [ ] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth).
+- [x] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500). *(Helper de errores creado)*
+- [x] Refactorización mediante KISS, DRY, YAGNI, SOLID... *(Aplicado DRY en handlers)*
+- [x] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth). *(Rate Limiter implementado)*
 - [ ] Repaso para el correcto funcionamiento en un servidor linux (para el uso correcto del Deploy)
 - [ ] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
 - [ ] Documentación en Postman para probar la API rápidamente.

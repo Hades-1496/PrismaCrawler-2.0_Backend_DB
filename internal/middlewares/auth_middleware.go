@@ -14,7 +14,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 1. Buscamos el token en la cabecera "Authorization"
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Acceso denegado. No hay token."})
+			utils.SendError(c, http.StatusUnauthorized, "Acceso denegado. No hay token.")
 			c.Abort() // ¡Súper importante en Gin para detener la cadena de ejecución!
 			return
 		}
@@ -25,7 +25,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 3. Verificamos el token usando nuestro paquete utils
 		claims, err := utils.ValidateToken(tokenString)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token no válido"})
+			utils.SendError(c, http.StatusUnauthorized, "Token no válido")
 			c.Abort()
 			return
 		}

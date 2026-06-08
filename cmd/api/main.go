@@ -56,6 +56,7 @@ func main() {
 	router.GET("/ping", getting)
 
 	authGroup := router.Group("/auth")
+	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
 	{
 		authGroup.POST("/register", handlers.Register)
 		authGroup.POST("/login", handlers.Login)
@@ -71,6 +72,7 @@ func main() {
 		apiGroup.POST("/runs/start", handlers.StartRun)
 		apiGroup.PUT("/runs/save", handlers.SaveRun)
 		apiGroup.GET("/leaderboard", handlers.GetLeaderboard)
+		apiGroup.GET("/items", handlers.GetItems)
 	}
 
 	router.Run(":" + PORT)

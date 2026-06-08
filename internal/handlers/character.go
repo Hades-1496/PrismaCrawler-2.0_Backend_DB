@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"prismacrawler/internal/models"
 	"prismacrawler/pkg/db"
+	"prismacrawler/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,7 +21,7 @@ func CreateCharacter(c *gin.Context) {
 
 	// Validamos el JSON recibido
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
 		return
 	}
 
@@ -37,7 +38,7 @@ func CreateCharacter(c *gin.Context) {
 	}
 
 	if result := db.DB.Create(&character); result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo crear el personaje"})
+		utils.SendError(c, http.StatusInternalServerError, "No se pudo crear el personaje")
 		return
 	}
 

@@ -23,6 +23,7 @@ Hasta el momento se han añadido al proyecto:
 - `gorm.io/gorm` y `gorm.io/driver/postgres` para la conexión y el ORM de la base de datos.
 - `golang.org/x/crypto/bcrypt` para la encriptación segura de contraseñas.
 - `github.com/golang-jwt/jwt/v5` para la generación y validación de tokens de sesión.
+- `golang.org/x/time/rate` para proteger la API con limitación de peticiones (Rate Limiting).
 
 ## 🧠 Decisiones Arquitectónicas y Consideraciones (Para el Equipo)
 
@@ -111,14 +112,14 @@ Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas pri
 
 ## ✅ Lista de Requisitos (MVP para Entrega)
 
-- [ ] **Setup y Conexión**: Conectar Go con Supabase (PostgreSQL) exitosamente.
-- [ ] **Migraciones**: Poder generar las tablas en la BD usando Ent o GORM.
-- [ ] **Auth API**: Endpoints para registrar y loguear un usuario (`/auth/register`, `/auth/login`).
-- [ ] **Character API**: CRUD de personajes (`/characters`).
-- [ ] **Game State API**: 
-  - Iniciar una nueva partida (`POST /runs/start`).
-  - Guardar el progreso / piso actual (`PUT /runs/{id}/save`).
-  - Morir / Finalizar partida (`POST /runs/{id}/die`).
+- [x] **Setup y Conexión**: Conectar Go con Supabase (PostgreSQL) exitosamente.
+- [x] **Migraciones**: Poder generar las tablas en la BD usando Ent o GORM.
+- [x] **Auth API**: Endpoints para registrar y loguear un usuario (`/auth/register`, `/auth/login`).
+- [x] **Character API**: CRUD de personajes (`/api/characters`).
+- [x] **Game State API**: 
+  - Iniciar una nueva partida (`POST /api/runs/start`).
+  - Guardar el progreso / piso actual y morir si HP <= 0 (`PUT /api/runs/save`).
+  - Consultar Leaderboard (`GET /api/leaderboard`).
 
 ## 🗃️ Archivo `.gitignore`
 Antes de hacer un commit, asegúrate de tener un archivo `.gitignore` en la raíz del proyecto para no exponer secretos ni subir código compilado:

@@ -5,6 +5,7 @@ import (
 	"prismacrawler/internal/models"
 	"prismacrawler/pkg/db"
 	"prismacrawler/pkg/utils"
+
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,14 +28,14 @@ func Register(c *gin.Context) {
 
 	// 1. Recibir y validar el JSON
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
 		return
 	}
 
 	// 2. Encriptar la contraseña
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error interno al procesar la contraseña"})
+		utils.SendError(c, http.StatusInternalServerError, "Error interno al procesar la contraseña")
 		return
 	}
 
@@ -48,7 +49,7 @@ func Register(c *gin.Context) {
 	result := db.DB.Create(&user)
 	if result.Error != nil {
 		// Como pusimos que Email es "uniqueIndex" en el modelo, GORM fallará si ya existe
-		c.JSON(http.StatusConflict, gin.H{"error": "Este email ya está en uso"})
+		utils.SendError(c, http.StatusConflict, "Este email ya está en uso")
 		return
 	}
 	// 5. Responder con éxito (HTTP 201 - Created)
@@ -59,7 +60,7 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos: " + err.Error()})
+		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
 		return
 	}
 
@@ -67,21 +68,21 @@ func Login(c *gin.Context) {
 	// 1. Buscamos al usuario en base al correo (Equivalente a prisma.user.findUnique)
 	result := db.DB.Where("email = ?", req.Email).First(&user)
 	if result.Error != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciales inválidas"})
+		utils.SendError(c, http.StatusUnauthorized, "Credenciales inválidas")
 		return
 	}
 
 	// 2. Comparamos la contraseña encriptada (Equivalente a bcrypt.compare)
 	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciales inválidas"})
+		utils.SendError(c, http.StatusUnauthorized, "Credenciales inválidas")
 		return
 	}
 
 	// 3. Generamos el token JWT
 	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error interno al generar el token"})
+		utils.SendError(c, http.StatusInternalServerError, "Error interno al generar el token")
 		return
 	}
 

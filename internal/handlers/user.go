@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"prismacrawler/internal/models"
 	"prismacrawler/pkg/db"
+	"prismacrawler/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ func GetProfile(c *gin.Context) {
 	// 2. Buscar al usuario
 	var user models.User
 	if err := db.DB.First(&user, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Usuario no encontrado"})
+		utils.SendError(c, http.StatusNotFound, "Usuario no encontrado")
 		return
 	}
 
