@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"prismacrawler/internal/models"
+	"prismacrawler/internal/services"
 	"prismacrawler/pkg/db"
 	"prismacrawler/pkg/utils"
 
@@ -86,6 +87,20 @@ func SaveRun(c *gin.Context) {
 	// Guardamos ambos modelos en la base de datos
 	db.DB.Save(&run)
 	db.DB.Save(&run.Character)
+
+	// Notificamos al backend IA si la partida terminó (Won o Dead)
+	if run.Status == "Dead" || run.Status == "Won" {
+		go services.NotifyAI("game_run_ended", map[string]interface{}{
+			"run_id":       run.ID,
+			"character_id": run.CharacterID,
+			"character":    run.Character.Name,
+			"class":        run.Character.Class,
+			"status":       run.Status,
+			"score":        run.Score,
+			"kills":        run.Kills,
+			"floor":        run.CurrentFloor,
+		})
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Progreso guardado correctamente",

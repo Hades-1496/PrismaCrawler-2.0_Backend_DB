@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"prismacrawler/internal/models"
+	"prismacrawler/internal/services"
 	"prismacrawler/pkg/db"
 	"prismacrawler/pkg/utils"
 
@@ -47,6 +48,12 @@ func Register(c *gin.Context) {
 		utils.SendError(c, http.StatusInternalServerError, "Error interno al generar el token")
 		return
 	}
+
+	// Notificamos al backend IA para el flujo de bienvenida
+	go services.NotifyAI("user_registered", map[string]interface{}{
+		"user_id": user.ID,
+		"email":   user.Email,
+	})
 
 	// 5. Responder con éxito (HTTP 201 - Created)
 	c.JSON(http.StatusCreated, gin.H{
