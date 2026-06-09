@@ -34,41 +34,8 @@ func main() {
 	// Routes
 	router := gin.Default()
 
-	// CORS — permite al frontend (y al AI backend) llamar desde cualquier origen local
-	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
-	origins := []string{"http://localhost:3000", "http://localhost:8001"}
-	if allowedOrigins != "" {
-		for _, o := range strings.Split(allowedOrigins, ",") {
-			origins = append(origins, strings.TrimSpace(o))
-		}
-	}
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     origins,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-
-
-	// DEV ONLY — eliminar antes de producción
-	if os.Getenv("GIN_MODE") != "release" {
-		router.POST("/dev/make-admin", func(c *gin.Context) {
-			var body struct {
-				Email string `json:"email"`
-			}
-			if err := c.ShouldBindJSON(&body); err != nil || body.Email == "" {
-				c.JSON(400, gin.H{"error": "email requerido"})
-				return
-			}
-			if err := db.DB.Exec("UPDATE users SET role = 'ADMIN' WHERE email = ?", body.Email).Error; err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, gin.H{"ok": true, "message": body.Email + " ahora es ADMIN"})
-		})
-	}
+	// Aplicamos CORS de forma global a todas las rutas
+	router.Use(middlewares.CORSMiddleware())
 
 	authGroup := router.Group("/auth")
 	authGroup.Use(middlewares.RateLimiter())
