@@ -20,6 +20,7 @@ type CreateCharacterRequest struct {
 // --- PARTIDAS (RUNS) ---
 type StartRunRequest struct {
 	CharacterID uint `json:"character_id" binding:"required"`
+	MapID       uint `json:"map_id"` // Opcional, si es 0 se genera procedural
 }
 
 type SaveRunRequest struct {

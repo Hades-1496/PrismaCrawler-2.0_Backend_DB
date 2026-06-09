@@ -64,6 +64,8 @@ Esta versión en Go no es solo una traducción del código anterior en Node.js/E
 4. **Gestión de Inventario**: En lugar de un simple catálogo visual, el backend ahora rastrea en la base de datos qué objetos lleva equipados cada personaje en su partida actual mediante `run_inventory`.
 5. **Rendimiento (El Motor)**: Pasamos de un entorno de un solo hilo (Node.js) a un entorno compilado y multihilo (Go), capaz de manejar miles de peticiones de guardado simultáneas sin cuellos de botella.
 6. **Código Limpio (Clean Code)**: Aplicación de principios DRY, YAGNI, KISS y SRP (SOLID), extrayendo la lógica del juego a métodos de los modelos y estandarizando el manejo de errores.
+7. **Seguridad y Accesibilidad**: Implementación de un Rate Limiter para evitar ataques de fuerza bruta y configuración de CORS nativo para permitir la conexión sin fricciones con el frontend (Phaser).
+8. **Mejoras de UX**: Auto-login integrado en el proceso de registro, devolviendo el JWT directamente para agilizar la entrada al juego.
 
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
 
@@ -123,7 +125,7 @@ Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas pri
 - [x] **Setup y Conexión**: Conectar Go con Supabase (PostgreSQL) exitosamente.
 - [x] **Migraciones**: Poder generar las tablas en la BD usando Ent o GORM.
 - [x] **Auth API**: Endpoints para registrar y loguear un usuario (`/auth/register`, `/auth/login`).
-- [x] **Character API**: CRUD de personajes (`/api/characters`).
+- [x] **Character API**: CRUD de personajes (`/api/characters`) y perfiles de usuario.
 - [x] **Game State API**: 
   - Iniciar una nueva partida (`POST /api/runs/start`).
   - Guardar el progreso / piso actual y morir si HP <= 0 (`PUT /api/runs/save`).
