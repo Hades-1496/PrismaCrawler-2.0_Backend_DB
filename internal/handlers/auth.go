@@ -10,18 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// RegisterRequest define el JSON que esperamos recibir del frontend
-type RegisterRequest struct {
-	Email    string `json:"email" binding:"required,email"`    // Requiere email
-	Password string `json:"password" binding:"required,min=6"` // Un mínimo de 6 caracteres para la contraseña
-}
-
-// LoginRequest define el JSON que esperamos recibir para iniciar sesión
-type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-}
-
 // Register maneja el registro de nuevos usuarios
 func Register(c *gin.Context) {
 	var req RegisterRequest

@@ -9,11 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// StartRunRequest define los datos necesarios para iniciar la partida
-type StartRunRequest struct {
-	CharacterID uint `json:"character_id" binding:"required"`
-}
-
 // StartRun inicializa una nueva partida para un personaje
 func StartRun(c *gin.Context) {
 	var req StartRunRequest
@@ -49,14 +44,6 @@ func StartRun(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "¡Partida iniciada!", "run": run})
 }
 
-// SaveRunRequest define los datos que Phaser enviará al terminar un piso
-type SaveRunRequest struct {
-	RunID        uint `json:"run_id" binding:"required"`
-	CurrentFloor int  `json:"current_floor" binding:"required"`
-	Score        int  `json:"score"`
-	CurrentHP    int  `json:"current_hp"`
-}
-
 // SaveRun actualiza el estado de la partida y la vida del personaje
 func SaveRun(c *gin.Context) {
 	var req SaveRunRequest
@@ -85,7 +72,7 @@ func SaveRun(c *gin.Context) {
 	}
 
 	// Delegamos la lógica del juego al modelo (Principios SOLID - SRP)
-	run.UpdateState(req.CurrentFloor, req.Score, req.CurrentHP)
+	run.UpdateState(req.CurrentFloor, req.Score, req.CurrentHP, req.Kills, req.DamageDealt, req.DamageTaken)
 
 	// Guardamos ambos modelos en la base de datos
 	db.DB.Save(&run)
@@ -115,11 +102,14 @@ func GetLeaderboard(c *gin.Context) {
 	var leaderboard []gin.H
 	for _, run := range runs {
 		leaderboard = append(leaderboard, gin.H{
-			"character": run.Character.Name,
-			"class":     run.Character.Class,
-			"score":     run.Score,
-			"floor":     run.CurrentFloor,
-			"status":    run.Status,
+			"character":    run.Character.Name,
+			"class":        run.Character.Class,
+			"score":        run.Score,
+			"floor":        run.CurrentFloor,
+			"kills":        run.Kills,
+			"damage_dealt": run.DamageDealt,
+			"damage_taken": run.DamageTaken,
+			"status":       run.Status,
 		})
 	}
 

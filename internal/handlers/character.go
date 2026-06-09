@@ -9,12 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateCharacterRequest define el JSON para crear un nuevo héroe
-type CreateCharacterRequest struct {
-	Name  string `json:"name" binding:"required"`
-	Class string `json:"class" binding:"required"` // Ej: "Guerrero", "Mago"
-}
-
 // CreateCharacter maneja la creación de un personaje asociado al usuario logueado
 func CreateCharacter(c *gin.Context) {
 	var req CreateCharacterRequest

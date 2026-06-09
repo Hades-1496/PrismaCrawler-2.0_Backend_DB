@@ -49,12 +49,6 @@ func GetProfile(c *gin.Context) {
 	})
 }
 
-// UpdateRoleRequest define los datos que esperamos recibir
-type UpdateRoleRequest struct {
-	UserID uint   `json:"user_id" binding:"required"`
-	Role   string `json:"role" binding:"required,oneof=USER ADMIN"` // oneof asegura que solo envíen valores válidos
-}
-
 // UpdateRole cambia el rol de un usuario (debería estar protegida por AdminMiddleware)
 func UpdateRole(c *gin.Context) {
 	var req UpdateRoleRequest

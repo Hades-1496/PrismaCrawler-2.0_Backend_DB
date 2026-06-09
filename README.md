@@ -154,3 +154,42 @@ Antes de hacer un commit, asegúrate de tener un archivo `.gitignore` en la raí
    go run cmd/api/main.go
    ```
  - 💡 Nota sobre el comando: A diferencia de JS donde ejecutas el script de entrada directamente (y herramientas como nodemon lo reinician), go run compila temporalmente toda tu aplicación en memoria y genera un binario para ejecutarla. La ruta cmd/api/main.go apunta a tu archivo principal. Al ser Go un lenguaje compilado, si modificas cualquier archivo .go, deberás detener el servidor en la terminal (Ctrl+C) y volver a ejecutar el comando para aplicar los cambios.
+
+## 🌍 Despliegue en Producción (Servidor Linux / VPS)
+
+Una de las mayores ventajas de Go frente a Node.js es que no necesitas instalar el lenguaje ni descargar dependencias (`node_modules`) en el servidor de producción. Todo se empaqueta en un único archivo binario nativo.
+
+### Paso 1: Compilar para Linux (Cross-Compilation)
+En tu ordenador (Windows/Mac), abre la terminal en la raíz del proyecto y ejecuta:
+```bash
+GOOS=linux GOARCH=amd64 go build -o prismacrawler cmd/api/main.go
+```
+Esto generará un archivo ejecutable llamado `prismacrawler` en la raíz de tu proyecto.
+
+### Paso 2: Subir al servidor
+Sube ese único archivo `prismacrawler` y tu archivo `.env` (con las URLs de tu Supabase de producción) al servidor Linux usando herramientas como FileZilla o mediante el comando `scp`. No hace falta subir nada más.
+
+### Paso 3: Ejecutar como Servicio (systemd)
+Para que la API nunca se apague (incluso si el servidor se reinicia o tú cierras la terminal), crea un servicio en Linux.
+En el servidor, crea el archivo `/etc/systemd/system/prismacrawler.service`:
+```ini
+[Unit]
+Description=PrismaCrawler API en Go
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/ruta/a/tu/carpeta
+ExecStart=/ruta/a/tu/carpeta/prismacrawler
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+Actívalo con `sudo systemctl enable prismacrawler` y enciéndelo con `sudo systemctl start prismacrawler`.
+
+## 🧪 Testing (TDD)
+Para ejecutar la suite de pruebas unitarias y de integración (E2E), asegúrate de haber configurado `TEST_DATABASE_URL` en tu `.env` y ejecuta:
+```bash
+go test ./tests/... -v
+```
