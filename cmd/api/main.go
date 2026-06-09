@@ -28,6 +28,10 @@ func main() {
 		dbURL = os.Getenv("DATABASE_URL")
 	}
 	db.ConnectDB(dbURL)
+
+	// Insertamos los datos básicos por defecto (Enemigos, Items, Mapas)
+	db.SeedData()
+
 	// Routes
 	router := gin.Default()
 
@@ -52,6 +56,11 @@ func main() {
 		apiGroup.PUT("/runs/save", handlers.SaveRun)
 		apiGroup.GET("/leaderboard", handlers.GetLeaderboard)
 		apiGroup.GET("/items", handlers.GetItems)
+
+		// Rutas de Contenido del Juego
+		apiGroup.GET("/enemies", handlers.GetEnemies)
+		apiGroup.GET("/maps", handlers.GetMaps)
+		apiGroup.GET("/maps/:id", handlers.GetMapByID)
 	}
 
 	// Grupo de rutas de Administración (Doble protección: Auth + Admin)

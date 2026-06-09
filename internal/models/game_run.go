@@ -8,6 +8,7 @@ import (
 type GameRun struct {
 	ID           uint      `gorm:"primaryKey"`
 	CharacterID  uint      `gorm:"not null"`
+	MapID        *uint     // Puntero para que pueda ser NULO. Si no es nulo, es un mapa prefabricado.
 	Seed         string    // Semilla para la generación del mapa
 	CurrentFloor int       `gorm:"default:1"`
 	Score        int       `gorm:"default:0"`

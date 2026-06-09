@@ -33,7 +33,16 @@ func StartRun(c *gin.Context) {
 	// 2. Crear la Partida (Run)
 	run := models.GameRun{
 		CharacterID: character.ID,
-		Seed:        utils.GenerateSeed(6), // Genera algo como "X7K2P9"
+	}
+
+	// Lógica Híbrida: Si se pide un mapa específico, lo usamos. Si no, generamos uno procedural.
+	if req.MapID > 0 {
+		var tempMap models.Map
+		if db.DB.First(&tempMap, req.MapID).Error == nil {
+			run.MapID = &req.MapID
+		}
+	} else {
+		run.Seed = utils.GenerateSeed(6) // Genera algo como "X7K2P9"
 	}
 
 	if result := db.DB.Create(&run); result.Error != nil {
