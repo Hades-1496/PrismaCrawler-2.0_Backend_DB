@@ -6,10 +6,7 @@ import (
 	"prismacrawler/internal/handlers"
 	"prismacrawler/internal/middlewares"
 	"prismacrawler/pkg/db"
-	"strings"
-	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -38,7 +35,7 @@ func main() {
 	router.Use(middlewares.CORSMiddleware())
 
 	authGroup := router.Group("/auth")
-	authGroup.Use(middlewares.RateLimiter())
+	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
 	{
 		authGroup.POST("/register", handlers.Register)
 		authGroup.POST("/login", handlers.Login)
