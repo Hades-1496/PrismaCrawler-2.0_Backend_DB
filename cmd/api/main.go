@@ -52,8 +52,26 @@ func main() {
 	}))
 
 
+	// DEV ONLY — eliminar antes de producción
+	if os.Getenv("GIN_MODE") != "release" {
+		router.POST("/dev/make-admin", func(c *gin.Context) {
+			var body struct {
+				Email string `json:"email"`
+			}
+			if err := c.ShouldBindJSON(&body); err != nil || body.Email == "" {
+				c.JSON(400, gin.H{"error": "email requerido"})
+				return
+			}
+			if err := db.DB.Exec("UPDATE users SET role = 'ADMIN' WHERE email = ?", body.Email).Error; err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, gin.H{"ok": true, "message": body.Email + " ahora es ADMIN"})
+		})
+	}
+
 	authGroup := router.Group("/auth")
-	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
+	authGroup.Use(middlewares.RateLimiter())
 	{
 		authGroup.POST("/register", handlers.Register)
 		authGroup.POST("/login", handlers.Login)
