@@ -29,6 +29,9 @@ func main() {
 	// Routes
 	router := gin.Default()
 
+	// Aplicamos CORS de forma global a todas las rutas
+	router.Use(middlewares.CORSMiddleware())
+
 	authGroup := router.Group("/auth")
 	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
 	{

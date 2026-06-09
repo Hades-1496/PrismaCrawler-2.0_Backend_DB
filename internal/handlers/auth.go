@@ -40,8 +40,20 @@ func Register(c *gin.Context) {
 		utils.SendError(c, http.StatusConflict, "Este email ya está en uso")
 		return
 	}
+
+	// 5. Generamos el token JWT (Auto-login equivalente al de JS)
+	token, err := utils.GenerateToken(user.ID)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, "Error interno al generar el token")
+		return
+	}
+
 	// 5. Responder con éxito (HTTP 201 - Created)
-	c.JSON(http.StatusCreated, gin.H{"message": "Usuario registrado exitosamente", "user_id": user.ID})
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Usuario registrado exitosamente",
+		"user_id": user.ID,
+		"token":   token,
+	})
 }
 
 // Login maneja la autenticación y devuelve un JWT
