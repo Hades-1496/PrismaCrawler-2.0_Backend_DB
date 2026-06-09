@@ -111,14 +111,14 @@ func GetLeaderboard(c *gin.Context) {
 	var leaderboard []gin.H
 	for _, run := range runs {
 		leaderboard = append(leaderboard, gin.H{
-			"character":    run.Character.Name,
-			"class":        run.Character.Class,
-			"score":        run.Score,
-			"floor":        run.CurrentFloor,
-			"kills":        run.Kills,
-			"damage_dealt": run.DamageDealt,
-			"damage_taken": run.DamageTaken,
-			"status":       run.Status,
+			"playerName":       run.Character.Name,
+			"class":            run.Character.Class,
+			"score":            run.Score,
+			"floor":            run.CurrentFloor,
+			"kills":            run.Kills,
+			"totalDamageDealt": run.DamageDealt,
+			"totalDamageTaken": run.DamageTaken,
+			"status":           run.Status,
 		})
 	}
 

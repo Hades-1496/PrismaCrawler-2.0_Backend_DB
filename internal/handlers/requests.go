@@ -33,6 +33,17 @@ type SaveRunRequest struct {
 	DamageTaken  int  `json:"damage_taken"`
 }
 
+// --- IA / CHATBOT ---
+type FaqRequest struct {
+	Question string `json:"question" binding:"required,min=3,max=500"`
+}
+
+// --- IA / DISCORD (admin) ---
+type ChangelogRequest struct {
+	Title   string `json:"title" binding:"max=256"`
+	Content string `json:"content" binding:"required,min=1,max=4000"`
+}
+
 // --- USUARIOS / ADMIN ---
 type UpdateRoleRequest struct {
 	UserID uint   `json:"user_id" binding:"required"`

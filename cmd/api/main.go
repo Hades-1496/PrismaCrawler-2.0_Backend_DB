@@ -5,6 +5,7 @@ import (
 	"os"
 	"prismacrawler/internal/handlers"
 	"prismacrawler/internal/middlewares"
+	"prismacrawler/pkg/aiclient"
 	"prismacrawler/pkg/db"
 
 	"github.com/gin-gonic/gin"
@@ -32,11 +33,23 @@ func main() {
 	// Insertamos los datos básicos por defecto (Enemigos, Items, Mapas)
 	db.SeedData()
 
+	// Cliente hacia el microservicio de IA. La URL nunca se expone al frontend;
+	// el token compartido viaja en X-Internal-Token para que la IA sea "ciega".
+	aiURL := os.Getenv("AI_SERVICE_URL")
+	if aiURL == "" {
+		aiURL = "http://localhost:8001"
+	}
+	handlers.AI = aiclient.New(aiURL, os.Getenv("AI_INTERNAL_TOKEN"))
+
 	// Routes
 	router := gin.Default()
 
 	// Aplicamos CORS de forma global a todas las rutas
 	router.Use(middlewares.CORSMiddleware())
+
+	// Leaderboard PÚBLICO (sin JWT): se registra en el router base, fuera del
+	// grupo protegido. Es la única fuente del ranking (antes lo servía la IA).
+	router.GET("/api/leaderboard", handlers.GetLeaderboard)
 
 	authGroup := router.Group("/auth")
 	authGroup.Use(middlewares.RateLimiter()) // Protegemos las rutas de autenticación
@@ -54,8 +67,10 @@ func main() {
 		apiGroup.GET("/characters", handlers.GetCharacters)
 		apiGroup.POST("/runs/start", handlers.StartRun)
 		apiGroup.PUT("/runs/save", handlers.SaveRun)
-		apiGroup.GET("/leaderboard", handlers.GetLeaderboard)
 		apiGroup.GET("/items", handlers.GetItems)
+
+		// Chatbot: el orquestador proxea hacia el backend de IA (la IA es ciega).
+		apiGroup.POST("/faq", handlers.Faq)
 
 		// Rutas de Contenido del Juego
 		apiGroup.GET("/enemies", handlers.GetEnemies)
@@ -68,6 +83,10 @@ func main() {
 	adminGroup.Use(middlewares.AdminMiddleware())
 	{
 		adminGroup.PUT("/role", handlers.UpdateRole)
+
+		// Acciones de Discord proxeadas a la IA (el front nunca llama a la IA directamente).
+		adminGroup.POST("/discord/changelog", handlers.DiscordChangelog)
+		adminGroup.POST("/discord/test-webhook", handlers.DiscordTestWebhook)
 	}
 
 	router.Run(":" + PORT)
