@@ -67,24 +67,6 @@ func (c *Client) post(ctx context.Context, path string, payload any) (json.RawMe
 	}
 }
 
-type FaqResult struct {
-	Answer  string   `json:"answer"`
-	Sources []string `json:"sources"`
-}
-
-// AskFaq reenvía la pregunta del chatbot al microservicio de IA.
-func (c *Client) AskFaq(ctx context.Context, question string) (*FaqResult, error) {
-	raw, err := c.post(ctx, "/api/faq", map[string]string{"question": question})
-	if err != nil {
-		return nil, err
-	}
-	var out FaqResult
-	if err := json.Unmarshal(raw, &out); err != nil {
-		return nil, fmt.Errorf("%w: respuesta ilegible", ErrUnavailable)
-	}
-	return &out, nil
-}
-
 // Proxy reenvía un POST interno arbitrario (p. ej. acciones de Discord) y
 // devuelve el cuerpo de respuesta de la IA tal cual para retransmitirlo.
 func (c *Client) Proxy(ctx context.Context, path string, payload any) (json.RawMessage, error) {

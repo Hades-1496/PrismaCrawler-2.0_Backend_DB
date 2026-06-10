@@ -40,3 +40,8 @@ func (r *GameRun) UpdateState(floor int, score int, currentHP int, kills int, dm
 		r.Character.BaseHP = currentHP
 	}
 }
+
+// IsOwnedBy comprueba si la partida pertenece a un usuario específico, respetando la Ley de Demeter.
+func (r *GameRun) IsOwnedBy(userID uint) bool {
+	return r.Character.UserID == userID
+}

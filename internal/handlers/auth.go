@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"context"
+	"log"
 	"net/http"
+	"time"
 	"prismacrawler/internal/models"
 	"prismacrawler/pkg/db"
 	"prismacrawler/pkg/utils"
@@ -47,6 +50,26 @@ func Register(c *gin.Context) {
 		utils.SendError(c, http.StatusInternalServerError, "Error interno al generar el token")
 		return
 	}
+
+	// Disparar evento asíncrono para n8n/IA (Goroutine)
+	go func(userID uint, email string) {
+		// Usamos un context nuevo para que no se cancele al responderle al cliente
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		payload := gin.H{
+			"event": "user_registered",
+			"data": gin.H{
+				"user_id": userID,
+				"email":   email,
+			},
+		}
+		if AI != nil {
+			if _, err := AI.Proxy(ctx, "/api/n8n/relay", payload); err != nil {
+				log.Printf("Error enviando trigger user_registered a IA: %v", err)
+			}
+		}
+	}(user.ID, user.Email)
 
 	// 5. Responder con éxito (HTTP 201 - Created)
 	c.JSON(http.StatusCreated, gin.H{

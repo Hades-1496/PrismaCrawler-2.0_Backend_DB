@@ -49,3 +49,9 @@ type UpdateRoleRequest struct {
 	UserID uint   `json:"user_id" binding:"required"`
 	Role   string `json:"role" binding:"required,oneof=USER ADMIN"`
 }
+
+// --- CONOCIMIENTO (RAG / ADMIN) ---
+type KnowledgeRequest struct {
+	Keywords []string `json:"keywords" binding:"required"`
+	Content  string   `json:"content" binding:"required,min=10"`
+}

@@ -40,11 +40,11 @@ func Faq(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 
-	res, err := AI.AskFaq(ctx, req.Question)
+	res, err := AI.Proxy(ctx, "/api/faq", gin.H{"question": req.Question})
 	if err != nil {
 		respondAIError(c, "faq", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"answer": res.Answer, "sources": res.Sources})
+	c.Data(http.StatusOK, "application/json", res)
 }

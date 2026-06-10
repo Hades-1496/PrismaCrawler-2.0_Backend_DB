@@ -5,17 +5,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"prismacrawler/internal/handlers"
 )
 
 // TestAuthEndpoints verifica el registro y login de forma aislada
 func TestAuthEndpoints(t *testing.T) {
 	router := SetupTestRouter()
-
-	// Registramos solo las rutas que nos interesan para este test
-	router.POST("/auth/register", handlers.Register)
-	router.POST("/auth/login", handlers.Login)
 
 	// 1. Probamos el Registro
 	registerPayload := []byte(`{"email": "hero@test.com", "password": "password123"}`)

@@ -1,16 +1,25 @@
 package handlers
 
 import (
+	
 	"net/http"
-	"prismacrawler/internal/models"
-	"prismacrawler/pkg/db"
+	"prismacrawler/internal/services"
 	"prismacrawler/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
+// GameHandler agrupa los controladores de partidas y sus dependencias (el servicio).
+type GameHandler struct {
+	service services.GameServiceInterface
+}
+
+func NewGameHandler(service services.GameServiceInterface) *GameHandler {
+	return &GameHandler{service: service}
+}
+
 // StartRun inicializa una nueva partida para un personaje
-func StartRun(c *gin.Context) {
+func (h *GameHandler) StartRun(c *gin.Context) {
 	var req StartRunRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
@@ -18,35 +27,21 @@ func StartRun(c *gin.Context) {
 	}
 
 	userID := utils.GetUserID(c)
-
-	// 1. Verificar que el personaje existe, pertenece al usuario y está vivo
-	var character models.Character
-	if err := db.DB.Where("id = ? AND user_id = ?", req.CharacterID, userID).First(&character).Error; err != nil {
-		utils.SendError(c, http.StatusNotFound, "Personaje no encontrado o no te pertenece")
-		return
-	}
-	if !character.IsAlive {
-		utils.SendError(c, http.StatusBadRequest, "Este personaje está muerto y no puede iniciar una partida")
-		return
+	input := services.StartRunInput{
+		CharacterID: req.CharacterID,
+		MapID:       req.MapID,
 	}
 
-	// 2. Crear la Partida (Run)
-	run := models.GameRun{
-		CharacterID: character.ID,
-	}
-
-	// Lógica Híbrida: Si se pide un mapa específico, lo usamos. Si no, generamos uno procedural.
-	if req.MapID > 0 {
-		var tempMap models.Map
-		if db.DB.First(&tempMap, req.MapID).Error == nil {
-			run.MapID = &req.MapID
+	run, err := h.service.StartRun(c.Request.Context(), userID, input)
+	if err != nil {
+		switch err {
+		case services.ErrCharacterNotFound:
+			utils.SendError(c, http.StatusNotFound, err.Error())
+		case services.ErrCharacterDead:
+			utils.SendError(c, http.StatusBadRequest, err.Error())
+		default:
+			utils.SendError(c, http.StatusInternalServerError, err.Error())
 		}
-	} else {
-		run.Seed = utils.GenerateSeed(6) // Genera algo como "X7K2P9"
-	}
-
-	if result := db.DB.Create(&run); result.Error != nil {
-		utils.SendError(c, http.StatusInternalServerError, "Error interno al crear la partida")
 		return
 	}
 
@@ -54,38 +49,39 @@ func StartRun(c *gin.Context) {
 }
 
 // SaveRun actualiza el estado de la partida y la vida del personaje
-func SaveRun(c *gin.Context) {
+func (h *GameHandler) SaveRun(c *gin.Context) {
 	var req SaveRunRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
 		return
 	}
-
 	userID := utils.GetUserID(c)
 
-	var run models.GameRun
-	// Preload("Character") es como el 'include: { character: true }' de Prisma
-	if err := db.DB.Preload("Character").Where("id = ?", req.RunID).First(&run).Error; err != nil {
-		utils.SendError(c, http.StatusNotFound, "Partida no encontrada")
-		return
+	// Mapeamos el DTO de HTTP al DTO del Servicio
+	input := services.SaveRunInput{
+		RunID:        req.RunID,
+		CurrentFloor: req.CurrentFloor,
+		Score:        req.Score,
+		CurrentHP:    req.CurrentHP,
+		Kills:        req.Kills,
+		DamageDealt:  req.DamageDealt,
+		DamageTaken:  req.DamageTaken,
 	}
 
-	// Validaciones de seguridad
-	if run.Character.UserID != userID {
-		utils.SendError(c, http.StatusUnauthorized, "No tienes permiso para modificar esta partida")
+	run, err := h.service.SaveRun(c.Request.Context(), userID, input)
+	if err != nil {
+		switch err {
+		case services.ErrRunNotFound:
+			utils.SendError(c, http.StatusNotFound, err.Error())
+		case services.ErrPermissionDenied:
+			utils.SendError(c, http.StatusForbidden, err.Error())
+		case services.ErrRunAlreadyEnded:
+			utils.SendError(c, http.StatusBadRequest, err.Error())
+		default:
+			utils.SendError(c, http.StatusInternalServerError, "Error al guardar la partida")
+		}
 		return
 	}
-	if run.Status != "In_Progress" {
-		utils.SendError(c, http.StatusBadRequest, "La partida ya ha finalizado")
-		return
-	}
-
-	// Delegamos la lógica del juego al modelo (Principios SOLID - SRP)
-	run.UpdateState(req.CurrentFloor, req.Score, req.CurrentHP, req.Kills, req.DamageDealt, req.DamageTaken)
-
-	// Guardamos ambos modelos en la base de datos
-	db.DB.Save(&run)
-	db.DB.Save(&run.Character)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Progreso guardado correctamente",
@@ -96,16 +92,12 @@ func SaveRun(c *gin.Context) {
 }
 
 // GetLeaderboard devuelve el Top 10 de mejores partidas globales
-func GetLeaderboard(c *gin.Context) {
-	var runs []models.GameRun
-
-	// Buscamos el Top 10 ordenado por Puntuación y luego por Piso.
-	// Preload("Character") trae los datos del héroe para poder mostrar su nombre.
-	db.DB.Preload("Character").
-		Where("score > 0"). // Opcional: ignoramos partidas sin puntuar
-		Order("score desc, current_floor desc").
-		Limit(10).
-		Find(&runs)
+func (h *GameHandler) GetLeaderboard(c *gin.Context) {
+	runs, err := h.service.GetLeaderboard(c.Request.Context())
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, "Error al obtener el leaderboard")
+		return
+	}
 
 	// Mapeamos los datos para enviar un JSON limpio a Phaser
 	var leaderboard []gin.H

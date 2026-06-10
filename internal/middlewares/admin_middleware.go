@@ -13,8 +13,7 @@ import (
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// El AuthMiddleware ya guardó el ID en el contexto, lo recuperamos
-		userIDValue, _ := c.Get("userID")
-		userID := uint(userIDValue.(float64))
+		userID := utils.GetUserID(c)
 
 		// Buscamos al usuario en la base de datos para ver su rol
 		var user models.User

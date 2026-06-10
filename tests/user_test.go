@@ -4,20 +4,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"prismacrawler/internal/handlers"
-	"prismacrawler/internal/middlewares"
 )
 
 // TestUserProfile_Unauthorized comprueba que el middleware bloquea peticiones sin token
 func TestUserProfile_Unauthorized(t *testing.T) {
 	router := SetupTestRouter()
-
-	apiGroup := router.Group("/api")
-	apiGroup.Use(middlewares.AuthMiddleware()) // Aplicamos el middleware
-	{
-		apiGroup.GET("/profile", handlers.GetProfile)
-	}
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/profile", nil)
 	w := httptest.NewRecorder()

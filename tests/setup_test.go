@@ -3,7 +3,11 @@ package tests
 import (
 	"log"
 	"os"
+	"prismacrawler/internal/handlers"
 	"prismacrawler/internal/models"
+	"prismacrawler/internal/repository"
+	"prismacrawler/internal/routes"
+	"prismacrawler/internal/services"
 	"prismacrawler/pkg/db"
 
 	"github.com/gin-gonic/gin"
@@ -29,12 +33,18 @@ func SetupTestRouter() *gin.Engine {
 
 	// 3. Conectamos GORM a la base de datos de test y reconstruimos las tablas
 	db.ConnectDB(testDBUrl)
-	db.DB.Exec("DROP TABLE IF EXISTS run_inventories, game_runs, characters, items, users CASCADE;")
-	db.DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Item{}, &models.GameRun{}, &models.RunInventory{})
+	db.DB.Exec("DROP TABLE IF EXISTS run_inventories, game_runs, characters, items, users, maps, enemies, knowledge_chunks CASCADE;")
+	db.DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Item{}, &models.GameRun{}, &models.RunInventory{}, &models.Map{}, &models.Enemy{}, &models.KnowledgeChunk{})
 
 	// 4. Configuramos el router de prueba
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
+
+	// 5. Inyectamos dependencias (dejando la IA en nil para no disparar webhooks)
+	gameRepo := repository.NewGameRepository(db.DB)
+	gameSvc := services.NewGameService(gameRepo, nil)
+	gameHandler := handlers.NewGameHandler(gameSvc)
+	routes.Setup(router, gameHandler)
 
 	return router
 }

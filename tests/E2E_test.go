@@ -6,24 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"prismacrawler/internal/handlers"
-	"prismacrawler/internal/middlewares"
 )
 
 // TestEndToEndFlow simula el ciclo completo de un jugador nuevo
 func TestEndToEndFlow(t *testing.T) {
 	router := SetupTestRouter()
-
-	// Replicamos la estructura exacta de main.go con sus middlewares
-	router.POST("/auth/register", handlers.Register)
-	router.POST("/auth/login", handlers.Login)
-	apiGroup := router.Group("/api")
-	apiGroup.Use(middlewares.AuthMiddleware())
-	{
-		apiGroup.POST("/characters", handlers.CreateCharacter)
-		apiGroup.POST("/runs/start", handlers.StartRun)
-	}
 
 	// PASO 1 y 2: Registro y Login
 	userPayload := []byte(`{"email": "e2e@test.com", "password": "password123"}`)

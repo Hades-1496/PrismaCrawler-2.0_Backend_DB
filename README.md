@@ -68,6 +68,18 @@ Esta versión en Go no es solo una traducción del código anterior en Node.js/E
 8. **Mejoras de UX**: Auto-login integrado en el proceso de registro, devolviendo el JWT directamente para agilizar la entrada al juego.
 9. **Arquitectura de Microservicios**: El backend de Go actúa como un **Orquestador**. Se comunica de forma segura con un microservicio de IA (Python) para tareas complejas como el chatbot de FAQ o la publicación en Discord, manteniendo a la IA aislada de la base de datos y del frontend.
 
+## 🧼 Principios de Clean Code Aplicados
+
+Para asegurar la mantenibilidad y escalabilidad del proyecto, se han aplicado los siguientes principios de diseño de software:
+
+- **KISS (Keep It Simple, Stupid)**: Se ha evitado la sobre-ingeniería. Por ejemplo, se centralizaron las rutas en un solo archivo en lugar de crear una estructura de carpetas excesiva para el tamaño del MVP.
+- **DRY (Don't Repeat Yourself)**: Se han creado funciones `helper` (como `utils.SendError` y `utils.GetUserID`) para evitar la duplicación de código en los controladores.
+- **YAGNI (You Ain't Gonna Need It)**: Se ha pospuesto la implementación de capas de `Repository` y `Service` y la lógica del inventario, ya que no eran estrictamente necesarias para el MVP, manteniendo el código base más pequeño y enfocado.
+- **SoC (Separation of Concerns)**: Se han separado las responsabilidades, por ejemplo, extrayendo la configuración de las rutas de `main.go` a su propio paquete `routes`, de modo que `main.go` solo se encarga de la inicialización.
+- **SRP (Single Responsibility Principle)**: Cada componente tiene una única razón para cambiar. Por ejemplo, la lógica de negocio (cómo muere un personaje) se movió de los controladores HTTP al propio modelo `GameRun`, dejando que el controlador solo se ocupe del transporte de datos.
+- **LoD (Law of Demeter)**: Se ha evitado el acoplamiento excesivo. Por ejemplo, en lugar de que un controlador acceda a `run.Character.UserID`, se ha creado un método `run.IsOwnedBy(userID)` para que el controlador solo "hable" con el objeto `run`.
+- **DIP (Dependency Inversion Principle)**: Los módulos de alto nivel (handlers) no dependen de los de bajo nivel (repositorios), sino de abstracciones (interfaces). Esto se logra mediante la Inyección de Dependencias en `main.go`.
+
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
 
 Para mantener la simplicidad sin sacrificar el orden, utilizaremos una arquitectura de carpetas estándar en Go:
@@ -123,6 +135,8 @@ Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas pri
    - `id`, `character_id`, `seed` (Para generación procedural), `current_floor`, `score`, `status` (In_Progress, Won, Dead)
 5. **`run_inventory` (Inventario de la partida actual)**
    - `id`, `run_id`, `item_id`, `quantity`, `equipped`
+6. **`knowledge_chunks` (Base de Conocimiento / RAG)**
+   - `id`, `keywords`, `content`
 
 ## ✅ Lista de Requisitos (MVP para Entrega)
 
