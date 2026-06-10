@@ -32,11 +32,32 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
 - [x] Mostrar ranking de puntuación con otros jugadores.
 - [ ] *Notas de bloqueo/aprendizaje:* 
 
-## Día 9-10: Pulido, Testeo y Entrega
-- [x] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500). *(Helper de errores creado)*
-- [x] Refactorización mediante KISS, DRY, YAGNI, SOLID... *(Aplicado DRY y SRP. Repository Pattern descartado por YAGNI)*
-- [x] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth). *(Rate Limiter implementado)*
-- [x] Repaso para el correcto funcionamiento en un servidor linux / Render (para el uso correcto del Deploy). *(Guía en README)*
-- [x] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
+## Día 9-10: Orquestación y Microservicios (IA)
+- [x] Configurar las variables de entorno `AI_SERVICE_URL` y `AI_INTERNAL_TOKEN` en `main.go`.
+- [ ] **Base de Conocimiento (RAG)**: Crear modelo `KnowledgeChunk` y endpoints CRUD protegidos para administradores.
+- [ ] **Cliente IA (`pkg/aiclient`)**: Crear cliente HTTP interno asíncrono que inyecte `X-Internal-Token`.
+- [ ] **Proxy FAQ**: Implementar `POST /api/faq` para rebotar las preguntas al microservicio.
+- [ ] **Triggers Automáticos (n8n)**:
+  - [ ] Enviar evento `user_registered` al finalizar `POST /auth/register`.
+  - [ ] Enviar evento `game_run_ended` al morir en `PUT /api/runs/save`.
+- [ ] **Discord Changelogs**: Implementar proxy `POST /api/admin/discord/changelog`.
+- [ ] *Notas de bloqueo/aprendizaje:*
+
+## Día 11-12: Pulido, Testeo y Entrega
+- [ ] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500).
+- [ ] Refactorización mediante principios de Clean Code:
+  - [ ] KISS (Keep It Simple, Stupid)
+  - [ ] DRY (Don't Repeat Yourself)
+  - [ ] YAGNI (You Ain't Gonna Need It)
+  - [ ] SoC (Separation of Concerns)
+  - [ ] LoD (Law of Demeter)
+  - [ ] SRP (Single Responsibility Principle)
+  - [ ] OCP (Open/Closed Principle)
+  - [ ] LSP (Liskov Substitution Principle)
+  - [ ] ISP (Interface Segregation Principle)
+  - [ ] DIP (Dependency Inversion Principle)
+- [ ] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth).
+- [ ] Repaso para el correcto funcionamiento en un servidor linux / Render (para el uso correcto del Deploy).
+- [ ] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
 - [ ] Documentación en Postman para probar la API rápidamente.
 - [ ] Preparar presentación/defensa de la introducción a Go.

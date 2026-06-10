@@ -66,6 +66,7 @@ Esta versión en Go no es solo una traducción del código anterior en Node.js/E
 6. **Código Limpio (Clean Code)**: Aplicación de principios DRY, YAGNI, KISS y SRP (SOLID), extrayendo la lógica del juego a métodos de los modelos y estandarizando el manejo de errores.
 7. **Seguridad y Accesibilidad**: Implementación de un Rate Limiter para evitar ataques de fuerza bruta y configuración de CORS nativo para permitir la conexión sin fricciones con el frontend (Phaser).
 8. **Mejoras de UX**: Auto-login integrado en el proceso de registro, devolviendo el JWT directamente para agilizar la entrada al juego.
+9. **Arquitectura de Microservicios**: El backend de Go actúa como un **Orquestador**. Se comunica de forma segura con un microservicio de IA (Python) para tareas complejas como el chatbot de FAQ o la publicación en Discord, manteniendo a la IA aislada de la base de datos y del frontend.
 
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
 
@@ -75,6 +76,7 @@ Para mantener la simplicidad sin sacrificar el orden, utilizaremos una arquitect
 PrismaCrawler/
 ├── cmd/
 │   └── api/             # Punto de entrada de la aplicación (main.go)
+├── configs/             # (Opcional) Configuración estática
 ├── internal/
 │   ├── handlers/        # Controladores (HTTP/Gin). Reciben la petición y devuelven JSON
 │   ├── middlewares/     # Interceptores de seguridad (Auth, Rate Limiter)
@@ -82,6 +84,8 @@ PrismaCrawler/
 │   ├── models/          # Entidades y esquemas (Ent/GORM)
 │   └── repository/      # Capa de acceso a la base de datos (Querys)
 ├── pkg/                 # Código reutilizable (Helpers de JWT, Seeds, db, etc)
+│   ├── aiclient/        # Cliente para el microservicio de IA
+│   └── db/              # Conexión a la base de datos y seeder
 ├── go.mod               # Dependencias
 └── README.md
 ```

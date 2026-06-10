@@ -33,6 +33,6 @@ func ConnectDB(url string) {
 	log.Println("!Conectado a la base de datos exitosamente!")
 
 	// GORM creará/actualizará las tablas basándose en las structs
-	// Migramos los 5 modelos principales del MVP
-	DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Item{}, &models.GameRun{}, &models.RunInventory{}, &models.Map{}, &models.Enemy{})
+	// Migramos los modelos del juego y los modelos de soporte para la IA
+	DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Item{}, &models.GameRun{}, &models.RunInventory{}, &models.Map{}, &models.Enemy{}, &models.KnowledgeChunk{})
 }
