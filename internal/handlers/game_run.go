@@ -113,25 +113,48 @@ func SaveRun(c *gin.Context) {
 
 // GetLeaderboard devuelve el Top 10 de mejores partidas globales
 func GetLeaderboard(c *gin.Context) {
-	var runs []models.GameRun
+	type LeaderboardRow struct {
+		Character         string
+		Class             string
+		Score             int
+		Floor             int
+		Status            string
+		Kills             int
+		TotalDamageDealt  int
+		TotalDamageTaken  int
+	}
 
-	// Buscamos el Top 10 ordenado por Puntuación y luego por Piso.
-	// Preload("Character") trae los datos del héroe para poder mostrar su nombre.
-	db.DB.Preload("Character").
-		Where("score > 0"). // Opcional: ignoramos partidas sin puntuar
-		Order("score desc, current_floor desc").
-		Limit(10).
-		Find(&runs)
+	var rows []LeaderboardRow
 
-	// Mapeamos los datos para enviar un JSON limpio a Phaser
+	db.DB.Raw(`
+		SELECT
+			c.name AS character,
+			c.class,
+			gr.score,
+			gr.current_floor AS floor,
+			gr.status,
+			COALESCE(rs.kills, 0) AS kills,
+			COALESCE(rs.total_damage_dealt, 0) AS total_damage_dealt,
+			COALESCE(rs.total_damage_taken, 0) AS total_damage_taken
+		FROM game_runs gr
+		JOIN characters c ON c.id = gr.character_id
+		LEFT JOIN run_stats rs ON rs.run_id = gr.id
+		WHERE gr.score > 0
+		ORDER BY gr.score DESC, gr.current_floor DESC
+		LIMIT 10
+	`).Scan(&rows)
+
 	var leaderboard []gin.H
-	for _, run := range runs {
+	for _, r := range rows {
 		leaderboard = append(leaderboard, gin.H{
-			"character": run.Character.Name,
-			"class":     run.Character.Class,
-			"score":     run.Score,
-			"floor":     run.CurrentFloor,
-			"status":    run.Status,
+			"character":           r.Character,
+			"class":               r.Class,
+			"score":               r.Score,
+			"floor":               r.Floor,
+			"status":              r.Status,
+			"kills":               r.Kills,
+			"totalDamageDealt":    r.TotalDamageDealt,
+			"totalDamageTaken":    r.TotalDamageTaken,
 		})
 	}
 
