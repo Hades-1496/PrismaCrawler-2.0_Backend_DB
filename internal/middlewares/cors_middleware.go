@@ -2,20 +2,14 @@ package middlewares
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"strings"
 )
 
 // CORSMiddleware configura las cabeceras de origen cruzado
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
-		if allowedOrigin != "" && strings.TrimRight(allowedOrigin, "/") == origin {
-			origin = allowedOrigin
-		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
