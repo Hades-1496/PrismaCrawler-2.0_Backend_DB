@@ -17,7 +17,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil { // nil es null para pointers, maps, etc.
-		log.Fatal("Error loading .env file")
+		log.Println("Aviso: No se encontró archivo .env. Se leerán las variables de entorno del sistema.")
 	}
 	PORT := os.Getenv("PORT")
 	if PORT == "" {

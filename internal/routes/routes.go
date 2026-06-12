@@ -22,6 +22,19 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
 
+	// Raíz PÚBLICA (Muestra un mensaje de bienvenida y las rutas disponibles dinámicamente)
+	router.GET("/", func(c *gin.Context) {
+		var routeList []string
+		for _, r := range router.Routes() {
+			routeList = append(routeList, r.Method+" "+r.Path)
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Bienvenido a PrismaCrawler 2.0 API",
+			"version": "1.0",
+			"routes":  routeList,
+		})
+	})
+
 	// Grupo Auth
 	authGroup := router.Group("/auth")
 	authGroup.Use(middlewares.RateLimiter())
