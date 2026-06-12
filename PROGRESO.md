@@ -64,7 +64,7 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
   - [x] ISP (Interface Segregation Principle) // Interfaces pequeñas y específicas
   - [x] DIP (Dependency Inversion Principle) // Inyección de dependencias
 - [x] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth).
-- [ ] Repaso para el correcto funcionamiento en un servidor linux / Render (para el uso correcto del Deploy).
-- [ ] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
+- [x] Repaso para el correcto funcionamiento en un servidor linux / Render (para el uso correcto del Deploy).
+- [x] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
 - [x] Documentación en Postman para probar la API rápidamente.
 - [ ] Preparar presentación/defensa de la introducción a Go.

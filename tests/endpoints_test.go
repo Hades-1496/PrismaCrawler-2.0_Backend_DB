@@ -2,8 +2,10 @@ package tests
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"prismacrawler/internal/models"
 	"testing"
 )
 
@@ -83,5 +85,67 @@ func TestPingEndpoint(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Error en Ping: se esperaba 200, se obtuvo %d", w.Code)
+	}
+}
+
+// TestIntegralFlow simula el ciclo de vida completo de un usuario en el juego (E2E)
+func TestIntegralFlow(t *testing.T) {
+	router := SetupTestRouter()
+
+	// 1. Registro
+	registerPayload := []byte(`{"email": "integral@test.com", "password": "password123"}`)
+	reqReg, _ := http.NewRequest(http.MethodPost, "/auth/register", bytes.NewBuffer(registerPayload))
+	reqReg.Header.Set("Content-Type", "application/json")
+	wReg := httptest.NewRecorder()
+	router.ServeHTTP(wReg, reqReg)
+
+	if wReg.Code != http.StatusCreated {
+		t.Fatalf("Fallo en registro: %d", wReg.Code)
+	}
+
+	// 2. Login
+	reqLog, _ := http.NewRequest(http.MethodPost, "/auth/login", bytes.NewBuffer(registerPayload))
+	reqLog.Header.Set("Content-Type", "application/json")
+	wLog := httptest.NewRecorder()
+	router.ServeHTTP(wLog, reqLog)
+
+	if wLog.Code != http.StatusOK {
+		t.Fatalf("Fallo en login: %d", wLog.Code)
+	}
+
+	var loginResponse struct {
+		Token string `json:"token"`
+	}
+	json.Unmarshal(wLog.Body.Bytes(), &loginResponse)
+	token := loginResponse.Token
+
+	// 3. Crear Personaje
+	charPayload := []byte(`{"name": "HeroeTest", "class": "Guerrero"}`)
+	reqChar, _ := http.NewRequest(http.MethodPost, "/api/characters", bytes.NewBuffer(charPayload))
+	reqChar.Header.Set("Content-Type", "application/json")
+	reqChar.Header.Set("Authorization", "Bearer "+token)
+	wChar := httptest.NewRecorder()
+	router.ServeHTTP(wChar, reqChar)
+
+	if wChar.Code != http.StatusCreated {
+		t.Fatalf("Fallo en creación de personaje: %d", wChar.Code)
+	}
+
+	var charResponse struct {
+		Character models.Character `json:"character"`
+	}
+	json.Unmarshal(wChar.Body.Bytes(), &charResponse)
+	charID := charResponse.Character.ID
+
+	// 4. Iniciar Partida
+	runPayload, _ := json.Marshal(map[string]uint{"character_id": charID})
+	reqRun, _ := http.NewRequest(http.MethodPost, "/api/runs/start", bytes.NewBuffer(runPayload))
+	reqRun.Header.Set("Content-Type", "application/json")
+	reqRun.Header.Set("Authorization", "Bearer "+token)
+	wRun := httptest.NewRecorder()
+	router.ServeHTTP(wRun, reqRun)
+
+	if wRun.Code != http.StatusCreated {
+		t.Fatalf("Fallo al iniciar partida: %d", wRun.Code)
 	}
 }

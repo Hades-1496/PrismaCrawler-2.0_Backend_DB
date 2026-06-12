@@ -1,0 +1,24 @@
+# Blueprint para Infraestructura como Código (IoC) en Render
+services:
+  - type: web
+    name: prismacrawler-backend
+    env: go
+    # Comandos para entorno Go nativo
+    buildCommand: go build -o prismacrawler cmd/api/main.go
+    startCommand: ./prismacrawler
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: ALLOWED_ORIGIN
+        value: "*"
+      - key: JWT_SECRET
+        generateValue: true
+      # Sincronización falsa: estas variables las deberás pegar tú a mano en el Dashboard
+      - key: DIRECT_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: AI_SERVICE_URL
+        sync: false
+      - key: AI_INTERNAL_TOKEN
+        sync: false

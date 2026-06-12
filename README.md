@@ -3,6 +3,18 @@
 Backend genérico orientado a juegos Dungeon Crawler / Roguelike, desarrollado en **Golang**. 
 Este proyecto sirve como introducción al desarrollo de APIs en Go, enfocándose en un rendimiento robusto, acceso a base de datos y gestión de estados de partida.
 
+## 📑 Índice
+1. [Objetivo](#-objetivo)
+2. [Stack Tecnológico](#️-stack-tecnológico-recomendado)
+3. [Comparativa JS vs Go](#-comparativa-evolución-de-nodejs-a-go)
+4. [Arquitectura y Flujo de Datos](#-arquitectura-del-proyecto-layered--capas)
+5. [Decisiones Arquitectónicas](#-decisiones-arquitectónicas)
+6. [Clean Code Aplicado](#-principios-de-clean-code-aplicados)
+7. [Rutas de la API (Endpoints)](#️-rutas-de-la-api-endpoints)
+8. [Esquema de Base de Datos](#️-esquema-de-base-de-datos-core-5-tablas)
+9. [Instalación y Ejecución](#-instalación-y-ejecución)
+10. [Despliegue y Testing](#-despliegue-en-producción-servidor-linux--vps)
+
 ## 🎯 Objetivo
 Proveer una API sólida para gestionar usuarios, personajes, inventarios y el estado del ciclo de juego (runs/partidas) interactuando con una base de datos PostgreSQL alojada en Supabase.
 
@@ -24,6 +36,66 @@ Hasta el momento se han añadido al proyecto:
 - `golang.org/x/crypto/bcrypt` para la encriptación segura de contraseñas.
 - `github.com/golang-jwt/jwt/v5` para la generación y validación de tokens de sesión.
 - `golang.org/x/time/rate` para proteger la API con limitación de peticiones (Rate Limiting).
+
+## 🌟 Comparativa: Evolución de Node.js a Go
+
+Esta versión en Go no es solo una traducción del código original, sino una **evolución arquitectónica** hacia un verdadero motor de estado persistente:
+
+| Característica | Node.js (Anterior) | Golang (Nuevo) |
+| :--- | :--- | :--- |
+| **Paradigma** | "Arcade" (Stateless, guarda score al morir) | "Roguelike" (Guarda progreso piso a piso) |
+| **Identidad** | `User` == Jugador / Avatar | Se separa la cuenta (`User`) de los héroes (`Character`) |
+| **Mapas** | Matriz ASCII estática en BD | Generación Procedural delegada por `Seed` aleatoria |
+| **Inventario** | Simple catálogo de consulta | El backend gestiona qué llevas equipado (`run_inventory`) |
+| **Rendimiento** | Single-thread (Bloqueos en CPU intensiva) | Compilado, multi-hilo nativo (`Goroutines`) rapidísimo |
+| **Código** | Scripting monolítico | Tipado estricto, Clean Code, Inyección de Dependencias |
+| **Arquitectura** | Todo en un mismo servidor | Go actúa de Orquestador, delegando la IA a microservicios |
+
+## 📐 Arquitectura del Proyecto (Layered / Capas)
+El proyecto utiliza una arquitectura por capas. El siguiente diagrama muestra cómo fluye una petición y cómo se comunican los componentes:
+
+```text
+   [ Frontend / Cliente Phaser ]
+                 |
+            (Petición HTTP)
+                 v
+           [ Router (Gin) ] -----------> Verifica Middlewares (Auth, CORS, Ping)
+                 |
+                 v
+     [ Handlers (Controladores) ] -----> Valida el JSON y extrae IDs
+                 |
+                 v
+       [ Services (Negocio) ] ---------> Aplica lógica del juego y lanza eventos a la IA (Observer)
+                 |
+                 v
+   [ Repository (Acceso a Datos) ] ----> Prepara las consultas abstrayendo el motor de BD
+                 |
+                 v
+         [ GORM (Motor ORM) ]
+                 |
+                 v
+      [ PostgreSQL (Supabase) ]
+```
+### Estructura de Carpetas
+```text
+PrismaCrawler/
+├── cmd/
+│   └── api/             # Punto de entrada de la aplicación (main.go)
+├── internal/
+│   ├── handlers/        # Controladores (HTTP/Gin). Reciben la petición y devuelven JSON
+│   ├── middlewares/     # Interceptores de seguridad (Auth, Rate Limiter, CORS)
+│   ├── services/        # Lógica de negocio (Ej: Validaciones antes de guardar partida)
+│   ├── models/          # Entidades de la Base de Datos (GORM)
+│   ├── repository/      # Capa de abstracción de base de datos
+│   └── routes/          # Centralización del enrutamiento
+├── pkg/                 # Código reutilizable (Helpers)
+│   ├── aiclient/        # Cliente HTTP para el microservicio de IA
+│   ├── db/              # Conexión a la base de datos y seeder
+│   └── utils/           # Utilidades genéricas (JWT, random seed)
+├── tests/               # Pruebas automatizadas (TDD)
+├── .env.example         # Plantilla de variables de entorno
+└── README.md
+```
 
 ## 🧠 Decisiones Arquitectónicas y Consideraciones (Para el Equipo)
 
@@ -54,20 +126,6 @@ El backend no debe sobrecargarse de lógica en tiempo real para esta entrega ini
 **Lo que SÍ haremos (Enfoque Transaccional):**
 - El cliente/frontend maneja el *gameplay* de la mazmorra. Nuestro backend en Go actuará como el "servidor de guardado y validación": Autenticará al usuario, entregará los datos del personaje al inicio de la *Run*, y recibirá actualizaciones del progreso (Ej: "El jugador superó el piso 3, guarda este estado y este nuevo inventario").
 
-## 🌟 Evolución del Proyecto (Node.js vs Go)
-
-Esta versión en Go no es solo una traducción del código anterior en Node.js/Express, sino una **evolución arquitectónica** hacia un verdadero motor de estado persistente:
-
-1. **El Paradigma (De "Arcade" a "Roguelike")**: En JS, el servidor era *stateless* (solo guardaba la puntuación al morir). En Go, el servidor guarda el estado *piso a piso* (`GameRun`), permitiendo continuar la partida si el navegador se cierra.
-2. **Identidad (Cuentas vs Héroes)**: Antes, el `User` era directamente el jugador. Ahora hemos separado la cuenta (`User`) del avatar (`Character`), permitiendo tener múltiples héroes (ej: Mago, Guerrero) en una misma cuenta.
-3. **Mapas Procedurales (Semillas)**: Eliminamos la tabla estática de mapas con ASCII. Ahora se genera una **Semilla (Seed)** aleatoria por partida que el frontend (Phaser) utilizará para generar laberintos infinitos y únicos.
-4. **Gestión de Inventario**: En lugar de un simple catálogo visual, el backend ahora rastrea en la base de datos qué objetos lleva equipados cada personaje en su partida actual mediante `run_inventory`.
-5. **Rendimiento (El Motor)**: Pasamos de un entorno de un solo hilo (Node.js) a un entorno compilado y multihilo (Go), capaz de manejar miles de peticiones de guardado simultáneas sin cuellos de botella.
-6. **Código Limpio (Clean Code)**: Aplicación de principios DRY, YAGNI, KISS y SRP (SOLID), extrayendo la lógica del juego a métodos de los modelos y estandarizando el manejo de errores.
-7. **Seguridad y Accesibilidad**: Implementación de un Rate Limiter para evitar ataques de fuerza bruta y configuración de CORS nativo para permitir la conexión sin fricciones con el frontend (Phaser).
-8. **Mejoras de UX**: Auto-login integrado en el proceso de registro, devolviendo el JWT directamente para agilizar la entrada al juego.
-9. **Arquitectura de Microservicios**: El backend de Go actúa como un **Orquestador**. Se comunica de forma segura con un microservicio de IA (Python) para tareas complejas como el chatbot de FAQ o la publicación en Discord, manteniendo a la IA aislada de la base de datos y del frontend.
-
 ## 🧼 Principios de Clean Code Aplicados
 
 Para asegurar la mantenibilidad y escalabilidad del proyecto, se han aplicado los siguientes principios de diseño de software:
@@ -81,28 +139,6 @@ Para asegurar la mantenibilidad y escalabilidad del proyecto, se han aplicado lo
 - **OCP (Open/Closed Principle)**: Mediante el patrón Observer (`GameObserver`), el servicio principal de partidas puede notificar a la IA y a otros futuros microservicios de los hitos del juego sin tener que modificar su código base.
 - **DIP (Dependency Inversion Principle)**: Los módulos de alto nivel (handlers) no dependen de los de bajo nivel (repositorios), sino de abstracciones (interfaces). Esto se logra mediante la Inyección de Dependencias en `main.go`.
 - **Testing (TDD) y Fiabilidad**: Se implementó una suite de pruebas unitarias y comprobaciones de health check (`/ping`) para facilitar los despliegues en producción.
-
-## 📐 Arquitectura del Proyecto (Layered / Capas)
-
-Para mantener la simplicidad sin sacrificar el orden, utilizaremos una arquitectura de carpetas estándar en Go:
-
-```text
-PrismaCrawler/
-├── cmd/
-│   └── api/             # Punto de entrada de la aplicación (main.go)
-├── configs/             # (Opcional) Configuración estática
-├── internal/
-│   ├── handlers/        # Controladores (HTTP/Gin). Reciben la petición y devuelven JSON
-│   ├── middlewares/     # Interceptores de seguridad (Auth, Rate Limiter)
-│   ├── services/        # Lógica de negocio (Validar que un jugador puede equipar un item)
-│   ├── models/          # Entidades y esquemas (Ent/GORM)
-│   └── repository/      # Capa de acceso a la base de datos (Querys)
-├── pkg/                 # Código reutilizable (Helpers de JWT, Seeds, db, etc)
-│   ├── aiclient/        # Cliente para el microservicio de IA
-│   └── db/              # Conexión a la base de datos y seeder
-├── go.mod               # Dependencias
-└── README.md
-```
 
 ## 🛣️ Rutas de la API (Endpoints)
 ### Autenticación (Públicas):
