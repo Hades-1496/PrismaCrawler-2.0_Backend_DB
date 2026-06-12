@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	
 	"net/http"
+	"prismacrawler/internal/models"
 	"prismacrawler/internal/services"
+	"prismacrawler/pkg/db"
 	"prismacrawler/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,17 @@ func (h *GameHandler) StartRun(c *gin.Context) {
 	}
 
 	userID := utils.GetUserID(c)
+
+	// --- MITIGACIÓN BUG FRONTEND ---
+	// Si el frontend envía body: {} sin character_id, auto-seleccionamos el primer personaje
+	if req.CharacterID == 0 {
+		var firstChar models.Character
+		db.DB.Where("user_id = ?", userID).First(&firstChar)
+		if firstChar.ID != 0 {
+			req.CharacterID = firstChar.ID
+		}
+	}
+
 	input := services.StartRunInput{
 		CharacterID: req.CharacterID,
 		MapID:       req.MapID,
@@ -115,4 +127,38 @@ func (h *GameHandler) GetLeaderboard(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"leaderboard": leaderboard})
+}
+
+// GetRuns devuelve el historial de todas las partidas del usuario
+func (h *GameHandler) GetRuns(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	var runs []models.GameRun
+
+	// Hacemos JOIN para asegurar que la partida le pertenece al usuario a través del personaje
+	db.DB.Preload("Character").
+		Joins("JOIN characters ON characters.id = game_runs.character_id").
+		Where("characters.user_id = ?", userID).
+		Order("game_runs.created_at desc").
+		Find(&runs)
+
+	c.JSON(http.StatusOK, gin.H{"runs": runs})
+}
+
+// GetRunByID devuelve los detalles de una partida, incluyendo el inventario (RunInventory)
+func (h *GameHandler) GetRunByID(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	var run models.GameRun
+
+	// Anidamos el Preload para obtener el inventario y los detalles de los objetos en un solo JSON
+	if err := db.DB.Preload("Character").Preload("Inventories.Item").Where("id = ?", c.Param("id")).First(&run).Error; err != nil {
+		utils.SendError(c, http.StatusNotFound, "Partida no encontrada")
+		return
+	}
+
+	if !run.IsOwnedBy(userID) {
+		utils.SendError(c, http.StatusForbidden, "No tienes permiso para ver esta partida")
+		return
+	}
+
+	c.JSON(http.StatusOK, run)
 }

@@ -36,5 +36,14 @@ func SeedData() {
 		DB.Where("name = ?", gameMap.Name).FirstOrCreate(&gameMap)
 	}
 
+	// 4. Sembrar Conocimiento Base (RAG)
+	knowledge := []models.KnowledgeChunk{
+		{Keywords: `["lore", "mundo"]`, Content: "PrismaCrawler es un laberinto infinito donde los aventureros buscan la redención."},
+		{Keywords: `["enemigos", "slime", "goblin"]`, Content: "Los enemigos básicos incluyen Slimes (30 HP) y Goblins (50 HP)."},
+	}
+	for _, k := range knowledge {
+		DB.Where("content = ?", k.Content).FirstOrCreate(&k)
+	}
+
 	log.Println("🌱 Datos semilla (Seeder) insertados correctamente.")
 }

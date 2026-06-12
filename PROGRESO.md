@@ -41,22 +41,29 @@ Este documento sirve para anotar el estado del proyecto y asegurar que llegamos 
   - [x] Enviar evento `user_registered` al finalizar `POST /auth/register`.
   - [x] Enviar evento `game_run_ended` al morir en `PUT /api/runs/save`.
 - [x] **Discord Changelogs**: Implementar proxy `POST /api/admin/discord/changelog`.
+- [x] **Endpoint Interno para RAG**: Crear `POST /api/internal/rag/search` para recibir embeddings y realizar búsqueda semántica con `pgvector`.
+- [x] **Eventos Game Observer & Economy**: Identificar hitos en la partida para notificar a la IA (`/api/game/event` y `/api/economy/status`).
+- [x] **Endpoints Internos de Datos (Microservicios)**: Crear rutas protegidas (que requieran `X-Internal-Token`) para exponer los datos necesarios para Python.
+  - [x] `GET /api/internal/rankings/top10` que devuelva el leaderboard en JSON, permitiendo al Cron de Discord en Python notificar adelantamientos sin consultar directamente a PostgreSQL.
+  - [x] `GET /api/internal/stats` que devuelva estadísticas globales (`total_players`, `total_runs`, `total_deaths`).
+  - [x] `GET /api/internal/items` que devuelva el catálogo de ítems.
+  - [x] `GET /api/internal/enemies` que devuelva el catálogo de enemigos (bestiario).
 - [ ] *Notas de bloqueo/aprendizaje:*
 
 ## Día 11-12: Pulido, Testeo y Entrega
-- [ ] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500).
+- [x] Limpieza de código y manejo de errores HTTP (400, 401, 404, 500).
 - [ ] Refactorización mediante principios de Clean Code:
   - [x] KISS (Rutas centralizadas en un solo archivo, Repository Pattern evitado)
   - [x] DRY (Helper de Errores y Helper de GetUserID)
-  - [ ] YAGNI (You Ain't Gonna Need It)
+  - [x] YAGNI (You Ain't Gonna Need It) // Evitada lógica excesiva en la gestión de billetera
   - [x] SoC (Separation of Concerns: main.go vs routes.go)
   - [x] LoD (Law of Demeter)
   - [x] SRP (Single Responsibility Principle: lógica de daño en modelo)
-  - [ ] OCP (Open/Closed Principle) // Aún no aplicado
-  - [ ] LSP (Liskov Substitution Principle) // No aplica directamente
+  - [x] OCP (Open/Closed Principle) // Aplicado Patrón Observer a Game Service
+  - [x] LSP (Liskov Substitution Principle) // No aplica directamente en este diseño
   - [x] ISP (Interface Segregation Principle) // Interfaces pequeñas y específicas
   - [x] DIP (Dependency Inversion Principle) // Inyección de dependencias
-- [ ] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth).
+- [x] Implementar medidas de seguridad básicas (Rate limiting, delays artificiales en Auth).
 - [ ] Repaso para el correcto funcionamiento en un servidor linux / Render (para el uso correcto del Deploy).
 - [ ] Implementación de tests mediante metodología de TDD (Crear tests aislados, explotación de endpoints, Test completo, etc.) 
 - [ ] Documentación en Postman para probar la API rápidamente.

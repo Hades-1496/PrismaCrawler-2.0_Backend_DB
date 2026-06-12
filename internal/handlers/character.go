@@ -48,3 +48,48 @@ func GetCharacters(c *gin.Context) {
 	// Si no hay personajes, devolverá un array vacío [], lo cual es correcto
 	c.JSON(http.StatusOK, gin.H{"characters": characters})
 }
+
+// GetCharacterByID devuelve un personaje específico del usuario
+func GetCharacterByID(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	var character models.Character
+
+	if err := db.DB.Where("id = ? AND user_id = ?", c.Param("id"), userID).First(&character).Error; err != nil {
+		utils.SendError(c, http.StatusNotFound, "Personaje no encontrado")
+		return
+	}
+
+	c.JSON(http.StatusOK, character)
+}
+
+// UpdateCharacter actualiza la información de un personaje
+func UpdateCharacter(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	var req CreateCharacterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Datos inválidos: "+err.Error())
+		return
+	}
+
+	var character models.Character
+	if err := db.DB.Where("id = ? AND user_id = ?", c.Param("id"), userID).First(&character).Error; err != nil {
+		utils.SendError(c, http.StatusNotFound, "Personaje no encontrado")
+		return
+	}
+
+	character.Name = req.Name
+	character.Class = req.Class
+	db.DB.Save(&character)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Personaje actualizado", "character": character})
+}
+
+// DeleteCharacter elimina un personaje si pertenece al usuario
+func DeleteCharacter(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	if err := db.DB.Where("id = ? AND user_id = ?", c.Param("id"), userID).Delete(&models.Character{}).Error; err != nil {
+		utils.SendError(c, http.StatusNotFound, "Personaje no encontrado o no autorizado")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Personaje eliminado correctamente"})
+}

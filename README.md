@@ -74,10 +74,11 @@ Para asegurar la mantenibilidad y escalabilidad del proyecto, se han aplicado lo
 
 - **KISS (Keep It Simple, Stupid)**: Se ha evitado la sobre-ingeniería. Por ejemplo, se centralizaron las rutas en un solo archivo en lugar de crear una estructura de carpetas excesiva para el tamaño del MVP.
 - **DRY (Don't Repeat Yourself)**: Se han creado funciones `helper` (como `utils.SendError` y `utils.GetUserID`) para evitar la duplicación de código en los controladores.
-- **YAGNI (You Ain't Gonna Need It)**: Se ha pospuesto la implementación de capas de `Repository` y `Service` y la lógica del inventario, ya que no eran estrictamente necesarias para el MVP, manteniendo el código base más pequeño y enfocado.
-- **SoC (Separation of Concerns)**: Se han separado las responsabilidades, por ejemplo, extrayendo la configuración de las rutas de `main.go` a su propio paquete `routes`, de modo que `main.go` solo se encarga de la inicialización.
+- **YAGNI (You Ain't Gonna Need It)**: Se han evitado capas innecesarias para CRUDs simples. Por ejemplo, en lugar de crear un `EconomyService` complejo, el handler gestiona las peticiones simples del monedero del jugador.
+- **SoC (Separation of Concerns)**: Se han separado las responsabilidades, aislando toda la configuración de endpoints en el paquete `routes` y delegando eventos asíncronos en middlewares u observers.
 - **SRP (Single Responsibility Principle)**: Cada componente tiene una única razón para cambiar. Por ejemplo, la lógica de negocio (cómo muere un personaje) se movió de los controladores HTTP al propio modelo `GameRun`, dejando que el controlador solo se ocupe del transporte de datos.
 - **LoD (Law of Demeter)**: Se ha evitado el acoplamiento excesivo. Por ejemplo, en lugar de que un controlador acceda a `run.Character.UserID`, se ha creado un método `run.IsOwnedBy(userID)` para que el controlador solo "hable" con el objeto `run`.
+- **OCP (Open/Closed Principle)**: Mediante el patrón Observer (`GameObserver`), el servicio principal de partidas puede notificar a la IA y a otros futuros microservicios de los hitos del juego sin tener que modificar su código base.
 - **DIP (Dependency Inversion Principle)**: Los módulos de alto nivel (handlers) no dependen de los de bajo nivel (repositorios), sino de abstracciones (interfaces). Esto se logra mediante la Inyección de Dependencias en `main.go`.
 
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
@@ -114,9 +115,13 @@ PrismaCrawler/
 - GET /api/characters: Obtiene la lista de personajes del usuario activo.
 - POST /api/runs/start: Inicia una partida, verificando que el personaje esté vivo, y genera la Seed procedural.
 - PUT /api/runs/save: Actualiza el progreso de la partida (piso, score, vida restante) o mata al personaje si HP <= 0.
+- GET /api/runs: Historial de todas las partidas del usuario.
+- GET /api/runs/:id: Detalles de una partida específica y los objetos equipados.
 - GET /api/profile: Obtiene los datos del usuario logueado y su Top 5 de mejores partidas.
 - GET /api/leaderboard: Devuelve el Top 10 de mejores partidas globales.
 - GET /api/items: Devuelve el catálogo completo de objetos del juego.
+- GET/PUT /api/wallet: Persistencia offline para las monedas y gemas.
+- GET/PUT /api/garden: Persistencia offline para el minijuego de las plantas.
 
 ### Administración (Protegidas por JWT y Rol ADMIN en /api/admin):
 

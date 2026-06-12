@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	ErrRunNotFound      = errors.New("partida no encontrada")
-	ErrPermissionDenied = errors.New("no tienes permiso para modificar esta partida")
-	ErrRunAlreadyEnded  = errors.New("la partida ya ha finalizado")
+	ErrRunNotFound       = errors.New("partida no encontrada")
+	ErrPermissionDenied  = errors.New("no tienes permiso para modificar esta partida")
+	ErrRunAlreadyEnded   = errors.New("la partida ya ha finalizado")
 	ErrCharacterNotFound = errors.New("personaje no encontrado o no te pertenece")
 	ErrCharacterDead     = errors.New("este personaje está muerto y no puede iniciar una partida")
 	ErrInternalCreate    = errors.New("error interno al crear la partida")
@@ -42,13 +42,73 @@ type GameServiceInterface interface {
 	SaveRun(ctx context.Context, userID uint, input SaveRunInput) (*models.GameRun, error)
 }
 
-type gameService struct {
-	repo repository.GameRepositoryInterface
-	ai   *aiclient.Client
+// --- OCP: PATRÓN OBSERVER ---
+
+// GameObserver permite extender la lógica de eventos de partidas sin modificar el servicio base
+type GameObserver interface {
+	OnSaveRun(run *models.GameRun, currentHP int, hpDropped, floorChanged bool)
 }
 
-func NewGameService(repo repository.GameRepositoryInterface, ai *aiclient.Client) GameServiceInterface {
-	return &gameService{repo: repo, ai: ai}
+// AIGameObserver implementa GameObserver para notificar al microservicio de Python
+type AIGameObserver struct {
+	ai *aiclient.Client
+}
+
+func NewAIGameObserver(ai *aiclient.Client) *AIGameObserver {
+	return &AIGameObserver{ai: ai}
+}
+
+func (o *AIGameObserver) OnSaveRun(run *models.GameRun, currentHP int, hpDropped, floorChanged bool) {
+	if o.ai == nil {
+		return
+	}
+	if currentHP <= 0 {
+		go func(runID uint, charName string, score, floor int) {
+			ctxBg, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			payload := map[string]any{
+				"event": "game_run_ended",
+				"data": map[string]any{
+					"run_id":    runID,
+					"character": charName,
+					"score":     score,
+					"floor":     floor,
+				},
+			}
+			if _, err := o.ai.Proxy(ctxBg, "/api/n8n/relay", payload); err != nil {
+				log.Printf("Error enviando trigger game_run_ended a IA: %v", err)
+			}
+		}(run.ID, run.Character.Name, run.Score, run.CurrentFloor)
+	} else if floorChanged || hpDropped {
+		go func(runID uint, charName string, floor, hp int) {
+			ctxBg, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			eventType := "floor_advanced"
+			if hpDropped {
+				eventType = "massive_damage_taken"
+			}
+			payload := map[string]any{
+				"event_type": eventType,
+				"run_id":     runID,
+				"character":  charName,
+				"floor":      floor,
+				"current_hp": hp,
+			}
+			o.ai.Proxy(ctxBg, "/api/game/event", payload)
+		}(run.ID, run.Character.Name, run.CurrentFloor, run.Character.BaseHP)
+	}
+}
+
+// --- GAME SERVICE ---
+
+type gameService struct {
+	repo      repository.GameRepositoryInterface
+	observers []GameObserver // Aceptamos múltiples observadores inyectados
+}
+
+// NewGameService acepta un número variable de observadores (variadic)
+func NewGameService(repo repository.GameRepositoryInterface, observers ...GameObserver) GameServiceInterface {
+	return &gameService{repo: repo, observers: observers}
 }
 
 func (s *gameService) StartRun(ctx context.Context, userID uint, input StartRunInput) (*models.GameRun, error) {
@@ -97,30 +157,21 @@ func (s *gameService) SaveRun(ctx context.Context, userID uint, input SaveRunInp
 		return nil, ErrRunAlreadyEnded
 	}
 
+	// Detectar hitos para el Game Observer antes de sobreescribir el estado
+	hpDropped := input.CurrentHP > 0 && run.Character.BaseHP-input.CurrentHP >= 30
+	floorChanged := run.CurrentFloor < input.CurrentFloor
+
 	run.UpdateState(input.CurrentFloor, input.Score, input.CurrentHP, input.Kills, input.DamageDealt, input.DamageTaken)
 
 	if err := s.repo.SaveRunAndCharacter(run, &run.Character); err != nil {
 		return nil, err
 	}
 
-	if input.CurrentHP <= 0 && s.ai != nil {
-		go func(runID uint, charName string, score, floor int) {
-			ctxBg, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-
-			payload := map[string]any{
-				"event": "game_run_ended",
-				"data": map[string]any{
-					"run_id":    runID,
-					"character": charName,
-					"score":     score,
-					"floor":     floor,
-				},
-			}
-			if _, err := s.ai.Proxy(ctxBg, "/api/n8n/relay", payload); err != nil {
-				log.Printf("Error enviando trigger game_run_ended a IA: %v", err)
-			}
-		}(run.ID, run.Character.Name, run.Score, run.CurrentFloor)
+	// SRP / OCP: Notificamos a los observadores registrados dinámicamente
+	for _, obs := range s.observers {
+		if obs != nil {
+			obs.OnSaveRun(run, input.CurrentHP, hpDropped, floorChanged)
+		}
 	}
 
 	return run, nil

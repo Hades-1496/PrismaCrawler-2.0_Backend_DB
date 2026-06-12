@@ -5,8 +5,8 @@ import (
 	"os"
 	"prismacrawler/internal/handlers"
 	"prismacrawler/internal/repository"
-	"prismacrawler/internal/services"
 	"prismacrawler/internal/routes"
+	"prismacrawler/internal/services"
 	"prismacrawler/pkg/aiclient"
 	"prismacrawler/pkg/db"
 
@@ -46,15 +46,19 @@ func main() {
 	// Inyección de Dependencias (Wiring)
 	// Creamos las instancias de cada capa, inyectando sus dependencias.
 	gameRepo := repository.NewGameRepository(db.DB)
-	gameSvc := services.NewGameService(gameRepo, handlers.AI)
+	var aiObserver services.GameObserver
+	if handlers.AI != nil {
+		aiObserver = services.NewAIGameObserver(handlers.AI)
+	}
+	gameSvc := services.NewGameService(gameRepo, aiObserver)
 	gameHandler := handlers.NewGameHandler(gameSvc)
+	internalHandler := handlers.NewInternalHandler()
 
 	// Routes
 	router := gin.Default()
 
-	// Separación de responsabilidades (SoC): Delegamos la configuración de rutas
-	// y le pasamos los handlers que necesitan dependencias.
-	routes.Setup(router, gameHandler)
+	// Separación de responsabilidades (SoC): Delegamos TODA la configuración de rutas a su propio paquete.
+	routes.Setup(router, gameHandler, internalHandler)
 
 	router.Run(":" + PORT)
 }

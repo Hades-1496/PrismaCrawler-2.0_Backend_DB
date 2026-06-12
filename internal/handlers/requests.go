@@ -19,8 +19,8 @@ type CreateCharacterRequest struct {
 
 // --- PARTIDAS (RUNS) ---
 type StartRunRequest struct {
-	CharacterID uint `json:"character_id" binding:"required"`
-	MapID       uint `json:"map_id"` // Opcional, si es 0 se genera procedural
+	CharacterID uint `json:"character_id"` // Quitamos binding:"required" para mitigar bug de Phaser
+	MapID       uint `json:"map_id"`       // Opcional, si es 0 se genera procedural
 }
 
 type SaveRunRequest struct {
@@ -54,4 +54,9 @@ type UpdateRoleRequest struct {
 type KnowledgeRequest struct {
 	Keywords []string `json:"keywords" binding:"required"`
 	Content  string   `json:"content" binding:"required,min=10"`
+}
+
+// --- IA / RAG ---
+type RAGSearchRequest struct {
+	Embedding []float32 `json:"embedding" binding:"required"`
 }

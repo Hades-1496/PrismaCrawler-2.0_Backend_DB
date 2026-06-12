@@ -33,18 +33,19 @@ func SetupTestRouter() *gin.Engine {
 
 	// 3. Conectamos GORM a la base de datos de test y reconstruimos las tablas
 	db.ConnectDB(testDBUrl)
-	db.DB.Exec("DROP TABLE IF EXISTS run_inventories, game_runs, characters, items, users, maps, enemies, knowledge_chunks CASCADE;")
-	db.DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Item{}, &models.GameRun{}, &models.RunInventory{}, &models.Map{}, &models.Enemy{}, &models.KnowledgeChunk{})
+	db.DB.Exec("DROP TABLE IF EXISTS run_inventories, game_runs, characters, items, users, maps, enemies, knowledge_chunks, wallets, gardens CASCADE;")
+	db.DB.AutoMigrate(&models.User{}, &models.Character{}, &models.Item{}, &models.GameRun{}, &models.RunInventory{}, &models.Map{}, &models.Enemy{}, &models.KnowledgeChunk{}, &models.Wallet{}, &models.Garden{})
 
 	// 4. Configuramos el router de prueba
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 
-	// 5. Inyectamos dependencias (dejando la IA en nil para no disparar webhooks)
+	// 5. Inyectamos dependencias (sin observadores adicionales para no disparar webhooks)
 	gameRepo := repository.NewGameRepository(db.DB)
-	gameSvc := services.NewGameService(gameRepo, nil)
+	gameSvc := services.NewGameService(gameRepo)
 	gameHandler := handlers.NewGameHandler(gameSvc)
-	routes.Setup(router, gameHandler)
+	internalHandler := handlers.NewInternalHandler()
+	routes.Setup(router, gameHandler, internalHandler)
 
 	return router
 }
