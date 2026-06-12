@@ -80,6 +80,7 @@ Para asegurar la mantenibilidad y escalabilidad del proyecto, se han aplicado lo
 - **LoD (Law of Demeter)**: Se ha evitado el acoplamiento excesivo. Por ejemplo, en lugar de que un controlador acceda a `run.Character.UserID`, se ha creado un método `run.IsOwnedBy(userID)` para que el controlador solo "hable" con el objeto `run`.
 - **OCP (Open/Closed Principle)**: Mediante el patrón Observer (`GameObserver`), el servicio principal de partidas puede notificar a la IA y a otros futuros microservicios de los hitos del juego sin tener que modificar su código base.
 - **DIP (Dependency Inversion Principle)**: Los módulos de alto nivel (handlers) no dependen de los de bajo nivel (repositorios), sino de abstracciones (interfaces). Esto se logra mediante la Inyección de Dependencias en `main.go`.
+- **Testing (TDD) y Fiabilidad**: Se implementó una suite de pruebas unitarias y comprobaciones de health check (`/ping`) para facilitar los despliegues en producción.
 
 ## 📐 Arquitectura del Proyecto (Layered / Capas)
 
@@ -105,27 +106,50 @@ PrismaCrawler/
 
 ## 🛣️ Rutas de la API (Endpoints)
 ### Autenticación (Públicas):
-
 - POST /auth/register: Registra un nuevo usuario (requiere email y password).
 - POST /auth/login: Inicia sesión y devuelve un token JWT.
 
-### Core del Juego (Protegidas por JWT en /api):
+### Generales (Públicas):
+- GET /api/leaderboard: Devuelve el Top 10 de mejores partidas globales.
+- GET /ping: Health check para verificar el estado del servidor.
+- GET /game/items: Alias de retrocompatibilidad para el catálogo de objetos en Phaser.
 
+### Core del Juego (Protegidas por JWT en /api):
 - POST /api/characters: Crea un nuevo personaje (Guerrero, Mago) para el usuario logueado.
 - GET /api/characters: Obtiene la lista de personajes del usuario activo.
+- GET /api/characters/:id: Obtiene los detalles de un personaje específico.
+- PUT /api/characters/:id: Actualiza el nombre/clase de un personaje.
+- DELETE /api/characters/:id: Elimina un personaje.
 - POST /api/runs/start: Inicia una partida, verificando que el personaje esté vivo, y genera la Seed procedural.
 - PUT /api/runs/save: Actualiza el progreso de la partida (piso, score, vida restante) o mata al personaje si HP <= 0.
 - GET /api/runs: Historial de todas las partidas del usuario.
 - GET /api/runs/:id: Detalles de una partida específica y los objetos equipados.
 - GET /api/profile: Obtiene los datos del usuario logueado y su Top 5 de mejores partidas.
-- GET /api/leaderboard: Devuelve el Top 10 de mejores partidas globales.
 - GET /api/items: Devuelve el catálogo completo de objetos del juego.
+- GET /api/enemies: Devuelve el catálogo completo (bestiario) de enemigos.
+- GET /api/maps: Lista los mapas generados del juego.
+- GET /api/maps/:id: Detalles de un mapa específico para el frontend.
 - GET/PUT /api/wallet: Persistencia offline para las monedas y gemas.
 - GET/PUT /api/garden: Persistencia offline para el minijuego de las plantas.
 
 ### Administración (Protegidas por JWT y Rol ADMIN en /api/admin):
-
 - PUT /api/admin/role: Cambia el rol de un usuario (requiere `user_id` y `role`).
+- POST /api/admin/discord/changelog: Envía notas del parche al servidor de Discord.
+- POST /api/admin/discord/test-webhook: Verifica la conectividad con el bot de Discord.
+- POST /api/admin/knowledge: Añade nueva información al cerebro RAG.
+- GET /api/admin/knowledge: Lista la base de conocimientos almacenada.
+- DELETE /api/admin/knowledge/:id: Borra un fragmento de conocimiento.
+
+### Comunicación Interna (Microservicios / IA):
+*(Rutas protegidas por header `X-Internal-Token`, exclusivas para el Backend de IA)*
+- GET /api/internal/rankings/top10: Devuelve el top 10 para el scheduler de Discord.
+- POST /api/internal/rag/search: Búsqueda vectorial semántica (`pgvector`).
+- GET /api/internal/stats: Estadísticas globales (jugadores, partidas, muertes).
+- GET /api/internal/items: Catálogo de objetos exportado para análisis de economía.
+- GET /api/internal/enemies: Bestiario exportado para el observador de la IA.
+- GET /api/internal/wallet/:user_id: Consulta del monedero por ID.
+- GET /api/internal/garden/:user_id: Consulta del estado del jardín por ID.
+
 ## 🗄️ Esquema de Base de Datos (Core 5 Tablas)
 Para un Dungeon Crawler genérico en un plazo realista, necesitamos 5 tablas principales:
 

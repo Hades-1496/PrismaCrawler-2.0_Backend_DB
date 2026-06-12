@@ -72,3 +72,16 @@ func TestErrorHandling(t *testing.T) {
 		t.Errorf("Error en manejo de 404: se esperaba 404, se obtuvo %d", w404.Code)
 	}
 }
+
+// TestPingEndpoint verifica que la ruta de health check responde correctamente
+func TestPingEndpoint(t *testing.T) {
+	router := SetupTestRouter()
+
+	req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Error en Ping: se esperaba 200, se obtuvo %d", w.Code)
+	}
+}

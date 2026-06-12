@@ -17,6 +17,11 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 	// Leaderboard PÚBLICO (sin JWT)
 	router.GET("/api/leaderboard", gameHandler.GetLeaderboard)
 
+	// Health check (Ping) PÚBLICO para comprobar que el deploy está funcionando
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "pong"})
+	})
+
 	// Grupo Auth
 	authGroup := router.Group("/auth")
 	authGroup.Use(middlewares.RateLimiter())
