@@ -88,11 +88,13 @@ func (o *AIGameObserver) OnSaveRun(run *models.GameRun, currentHP int, hpDropped
 				eventType = "massive_damage_taken"
 			}
 			payload := map[string]any{
-				"event_type": eventType,
-				"run_id":     runID,
-				"character":  charName,
-				"floor":      floor,
-				"current_hp": hp,
+				"event": eventType,
+				"data": map[string]any{
+					"run_id":         runID,
+					"character_name": charName,
+					"floor":          floor,
+					"current_hp":     hp,
+				},
 			}
 			o.ai.Proxy(ctxBg, "/api/game/event", payload)
 		}(run.ID, run.Character.Name, run.CurrentFloor, run.Character.BaseHP)

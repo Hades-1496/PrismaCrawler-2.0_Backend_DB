@@ -40,9 +40,12 @@ func UpdateWallet(c *gin.Context) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			payload := map[string]any{
-				"user_id": uID,
-				"coins":   coins,
-				"gems":    gems,
+				"event": "wallet_updated",
+				"data": map[string]any{
+					"user_id": uID,
+					"coins":   coins,
+					"gems":    gems,
+				},
 			}
 			AI.Proxy(ctx, "/api/economy/status", payload)
 		}(userID, wallet.Coins, wallet.Gems)
