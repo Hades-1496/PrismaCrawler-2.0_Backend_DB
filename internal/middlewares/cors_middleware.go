@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,6 +11,12 @@ import (
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
+		allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
+		
+		if allowedOrigin != "" && origin != allowedOrigin && allowedOrigin != "*" {
+			// Si hay origin permitido y no coincide, no ponemos la cabecera (o ponemos la permitida)
+			origin = allowedOrigin
+		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")

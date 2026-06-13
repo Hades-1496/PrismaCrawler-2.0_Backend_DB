@@ -16,7 +16,6 @@ func NewInternalHandler() *InternalHandler {
 	return &InternalHandler{}
 }
 
-// GetTop10 devuelve el leaderboard para que el bot de Discord en Python pueda notificar adelantamientos
 func (h *InternalHandler) GetTop10(c *gin.Context) {
 	var topRuns []models.GameRun
 
@@ -31,7 +30,18 @@ func (h *InternalHandler) GetTop10(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, topRuns)
+	var leaderboard []gin.H
+	for _, run := range topRuns {
+		leaderboard = append(leaderboard, gin.H{
+			"character_id":   run.CharacterID,
+			"character_name": run.Character.Name,
+			"user_id":        run.Character.UserID,
+			"score":          run.Score,
+			"floor":          run.CurrentFloor,
+		})
+	}
+
+	c.JSON(http.StatusOK, leaderboard)
 }
 
 // SearchRAG recibe un vector desde Python y devuelve los fragmentos más relevantes usando pgvector

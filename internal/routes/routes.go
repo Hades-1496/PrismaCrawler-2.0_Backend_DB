@@ -17,9 +17,19 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 	// Leaderboard PÚBLICO (sin JWT)
 	router.GET("/api/leaderboard", gameHandler.GetLeaderboard)
 
+	// FAQ PÚBLICO (proxea al microservicio de IA)
+	router.POST("/api/faq", handlers.Faq)
+
 	// Health check (Ping) PÚBLICO para comprobar que el deploy está funcionando
 	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
+		aiStatus := "offline"
+		if handlers.AI != nil && handlers.AI.Ping(c.Request.Context()) {
+			aiStatus = "online"
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+			"ai_backend": aiStatus,
+		})
 	})
 
 	// Raíz PÚBLICA (Muestra un mensaje de bienvenida y las rutas disponibles dinámicamente)

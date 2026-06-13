@@ -66,9 +66,12 @@ func GetGarden(c *gin.Context) {
 func UpdateGarden(c *gin.Context) {
 	userID := utils.GetUserID(c)
 	var req models.Garden
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Datos de jardín inválidos")
+		return
+	}
 	var garden models.Garden
 	db.DB.Where("user_id = ?", userID).FirstOrCreate(&garden, models.Garden{UserID: userID})
-	c.ShouldBindJSON(&req) // Si falla usaremos los valores de req por defecto (vacíos)
 	garden.Plants = req.Plants
 	db.DB.Save(&garden)
 	c.JSON(http.StatusOK, garden)

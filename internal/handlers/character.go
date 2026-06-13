@@ -87,7 +87,12 @@ func UpdateCharacter(c *gin.Context) {
 // DeleteCharacter elimina un personaje si pertenece al usuario
 func DeleteCharacter(c *gin.Context) {
 	userID := utils.GetUserID(c)
-	if err := db.DB.Where("id = ? AND user_id = ?", c.Param("id"), userID).Delete(&models.Character{}).Error; err != nil {
+	result := db.DB.Where("id = ? AND user_id = ?", c.Param("id"), userID).Delete(&models.Character{})
+	if result.Error != nil {
+		utils.SendError(c, http.StatusInternalServerError, "Error al intentar eliminar personaje")
+		return
+	}
+	if result.RowsAffected == 0 {
 		utils.SendError(c, http.StatusNotFound, "Personaje no encontrado o no autorizado")
 		return
 	}

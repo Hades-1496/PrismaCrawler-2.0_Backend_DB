@@ -72,3 +72,17 @@ func (c *Client) post(ctx context.Context, path string, payload any) (json.RawMe
 func (c *Client) Proxy(ctx context.Context, path string, payload any) (json.RawMessage, error) {
 	return c.post(ctx, path, payload)
 }
+
+// Ping hace una petición GET al endpoint de ping de la IA para verificar si está online.
+func (c *Client) Ping(ctx context.Context) bool {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/ping", nil)
+	if err != nil {
+		return false
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == http.StatusOK
+}
