@@ -114,5 +114,6 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 		internalGroup.GET("/enemies", internalHandler.GetEnemies)
 		internalGroup.GET("/wallet/:user_id", internalHandler.GetWallet)
 		internalGroup.GET("/garden/:user_id", internalHandler.GetGarden)
+		internalGroup.POST("/rewards/weekly", internalHandler.DistributeWeeklyRewards)
 	}
 }

@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
+
 	"prismacrawler/internal/models"
 	"prismacrawler/pkg/db"
 
@@ -114,4 +117,107 @@ func (h *InternalHandler) GetGarden(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, garden)
+}
+
+// gemsForRank define el premio escalonado en GEMAS (moneda premium) por posición
+// en el top semanal. Las gemas no se generan en el garden ni en la mazmorra, así
+// que repartirlas como premio de ranking NO infla la economía de monedas (coins).
+func gemsForRank(rank int) int {
+	switch {
+	case rank == 1:
+		return 50
+	case rank == 2:
+		return 40
+	case rank == 3:
+		return 30
+	case rank <= 5:
+		return 20
+	default:
+		return 10
+	}
+}
+
+// mondayOfWeekUTC devuelve el lunes a las 00:00 UTC de la semana que contiene t.
+func mondayOfWeekUTC(t time.Time) time.Time {
+	t = t.UTC()
+	weekday := int(t.Weekday())
+	if weekday == 0 {
+		weekday = 7 // domingo cuenta como último día de la semana ISO
+	}
+	monday := t.AddDate(0, 0, -(weekday - 1))
+	return time.Date(monday.Year(), monday.Month(), monday.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// DistributeWeeklyRewards reparte gemas al top 10 de operadores de una semana.
+// Por defecto procesa la SEMANA ANTERIOR (cierre de competición). Con ?week=current
+// procesa la semana en curso (útil para pruebas/demostración).
+// Es idempotente: el índice único (user_id, year_week) impide pagar dos veces.
+func (h *InternalHandler) DistributeWeeklyRewards(c *gin.Context) {
+	now := time.Now().UTC()
+	target := now.AddDate(0, 0, -7) // semana anterior por defecto
+	if c.Query("week") == "current" {
+		target = now
+	}
+
+	year, week := target.ISOWeek()
+	yearWeek := fmt.Sprintf("%d-W%02d", year, week)
+	weekStart := mondayOfWeekUTC(target)
+	weekEnd := weekStart.AddDate(0, 0, 7)
+
+	// Mejores runs de la semana. Pedimos margen (50) para luego deduplicar por usuario:
+	// un mismo operador no puede ocupar varias posiciones del podio.
+	var topRuns []models.GameRun
+	if err := db.DB.Preload("Character").
+		Where("created_at >= ? AND created_at < ?", weekStart, weekEnd).
+		Order("score DESC, current_floor DESC").
+		Limit(50).
+		Find(&topRuns).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al consultar el ranking semanal"})
+		return
+	}
+
+	seen := map[uint]bool{}
+	rank := 0
+	awarded := []gin.H{}
+
+	for _, run := range topRuns {
+		uid := run.Character.UserID
+		if uid == 0 || seen[uid] {
+			continue
+		}
+		seen[uid] = true
+		rank++
+		if rank > 10 {
+			break
+		}
+
+		gems := gemsForRank(rank)
+		reward := models.WeeklyReward{UserID: uid, YearWeek: yearWeek, Rank: rank, Gems: gems}
+
+		// El Create falla si ya existe (user_id, year_week) → semana ya pagada, lo saltamos.
+		if err := db.DB.Create(&reward).Error; err != nil {
+			continue
+		}
+
+		// Acreditamos las gemas en la billetera del operador.
+		var wallet models.Wallet
+		db.DB.Where("user_id = ?", uid).FirstOrCreate(&wallet, models.Wallet{UserID: uid})
+		wallet.Gems += gems
+		db.DB.Save(&wallet)
+
+		awarded = append(awarded, gin.H{
+			"user_id":        uid,
+			"character_name": run.Character.Name,
+			"rank":           rank,
+			"gems":           gems,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"year_week":     yearWeek,
+		"week_start":    weekStart,
+		"week_end":      weekEnd,
+		"awarded_count": len(awarded),
+		"awarded":       awarded,
+	})
 }
