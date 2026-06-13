@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"prismacrawler/internal/models"
@@ -22,8 +23,8 @@ func NewInternalHandler() *InternalHandler {
 func (h *InternalHandler) GetTop10(c *gin.Context) {
 	var topRuns []models.GameRun
 
-	// Obtenemos las 10 mejores partidas (ordenadas por score y piso)
-	result := db.DB.Preload("Character").
+	result := db.DB.Preload("Character.User").
+		Where("status IN ?", []string{"Dead", "Won"}).
 		Order("score DESC, current_floor DESC").
 		Limit(10).
 		Find(&topRuns)
@@ -35,12 +36,16 @@ func (h *InternalHandler) GetTop10(c *gin.Context) {
 
 	var leaderboard []gin.H
 	for _, run := range topRuns {
+		email := run.Character.User.Email
+		username := strings.SplitN(email, "@", 2)[0]
 		leaderboard = append(leaderboard, gin.H{
 			"character_id":   run.CharacterID,
 			"character_name": run.Character.Name,
+			"username":       username,
 			"user_id":        run.Character.UserID,
 			"score":          run.Score,
 			"floor":          run.CurrentFloor,
+			"kills":          run.Kills,
 		})
 	}
 
