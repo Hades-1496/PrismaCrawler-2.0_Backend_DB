@@ -50,6 +50,16 @@ type UpdateRoleRequest struct {
 	Role   string `json:"role" binding:"required,oneof=USER ADMIN"`
 }
 
+// --- ECONOMÍA ---
+type UpdateWalletRequest struct {
+	DeltaCoins int `json:"delta_coins"`
+	DeltaGems  int `json:"delta_gems"`
+}
+
+type UpdateGardenRequest struct {
+	Plants string `json:"plants" binding:"required"`
+}
+
 // --- CONOCIMIENTO (RAG / ADMIN) ---
 type KnowledgeRequest struct {
 	Keywords []string `json:"keywords" binding:"required"`

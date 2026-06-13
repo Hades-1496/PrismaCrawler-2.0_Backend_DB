@@ -19,6 +19,6 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: AI_SERVICE_URL
-        sync: false
+        value: https://prismacrawler-ai.onrender.com
       - key: AI_INTERNAL_TOKEN
         sync: false
