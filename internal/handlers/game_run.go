@@ -36,6 +36,15 @@ func (h *GameHandler) StartRun(c *gin.Context) {
 		db.DB.Where("user_id = ?", userID).First(&firstChar)
 		if firstChar.ID != 0 {
 			req.CharacterID = firstChar.ID
+		} else {
+			// Auto-crear personaje por defecto si no tiene ninguno
+			firstChar = models.Character{
+				UserID: userID,
+				Name:   "Operador",
+				Class:  "Soldier",
+			}
+			db.DB.Create(&firstChar)
+			req.CharacterID = firstChar.ID
 		}
 	}
 
