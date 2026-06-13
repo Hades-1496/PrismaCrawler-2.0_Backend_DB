@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"hash/fnv"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -48,7 +49,8 @@ func GetMapByID(c *gin.Context) {
 	if id < 1 {
 		id = 1
 	}
-	layout, dictionary := generateMap(id)
+	seed := c.Query("seed")
+	layout, dictionary := generateMap(id, seed)
 
 	layoutJSON, _ := json.Marshal(layout)
 	dictJSON, _ := json.Marshal(dictionary)
@@ -62,10 +64,17 @@ func GetMapByID(c *gin.Context) {
 	})
 }
 
-// generateMap genera un dungeon ASCII determinista basado en el nivel.
-// Usa el nivel como semilla para que el mismo piso sea siempre igual.
-func generateMap(level int) ([]string, map[string]any) {
-	rng := rand.New(rand.NewSource(int64(level * 31337)))
+// seedSource combina el nivel y la semilla de la run para un RNG determinista por partida.
+// Sin seed (cadena vacía) es compatible hacia atrás (solo hash del nivel).
+func seedSource(level int, seed string) int64 {
+	h := fnv.New64a()
+	h.Write([]byte(seed))
+	return int64(level*31337) ^ int64(h.Sum64())
+}
+
+// generateMap genera un dungeon ASCII determinista basado en el nivel y la semilla de run.
+func generateMap(level int, seed string) ([]string, map[string]any) {
+	rng := rand.New(rand.NewSource(seedSource(level, seed)))
 
 	cols := 20
 	rows := 14

@@ -59,7 +59,7 @@ func Register(c *gin.Context) {
 
 		payload := gin.H{
 			"event": "user_registered",
-			"data": gin.H{
+			"payload": gin.H{
 				"user_id": userID,
 				"email":   email,
 			},

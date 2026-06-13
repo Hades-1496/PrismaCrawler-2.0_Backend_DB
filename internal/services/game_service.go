@@ -68,7 +68,7 @@ func (o *AIGameObserver) OnSaveRun(run *models.GameRun, currentHP int, hpDropped
 			defer cancel()
 			payload := map[string]any{
 				"event": "game_run_ended",
-				"data": map[string]any{
+				"payload": map[string]any{
 					"run_id":    runID,
 					"character": charName,
 					"score":     score,
