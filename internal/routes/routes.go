@@ -82,9 +82,9 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 		apiGroup.GET("/maps", handlers.GetMaps)
 		apiGroup.GET("/maps/:id", handlers.GetMapByID)
 		apiGroup.GET("/wallet", handlers.GetWallet)
-		apiGroup.PUT("/wallet", handlers.UpdateWallet)
-		apiGroup.POST("/wallet/checkout", handlers.CreateStripeCheckout)
-		apiGroup.POST("/wallet/exchange", handlers.ExchangeCoinsForGems)
+		apiGroup.PUT("/wallet", middlewares.RateLimiter(), handlers.UpdateWallet)
+		apiGroup.POST("/wallet/checkout", middlewares.RateLimiter(), handlers.CreateStripeCheckout)
+		apiGroup.POST("/wallet/exchange", middlewares.RateLimiter(), handlers.ExchangeCoinsForGems)
 		apiGroup.GET("/garden", handlers.GetGarden)
 		apiGroup.PUT("/garden", handlers.UpdateGarden)
 	}

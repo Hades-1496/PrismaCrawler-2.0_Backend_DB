@@ -37,8 +37,11 @@ func UpdateWallet(c *gin.Context) {
 		return
 	}
 
-	if req.DeltaCoins > maxDeltaCoinsPerTx || req.DeltaGems > maxDeltaGemsPerTx {
-		utils.SendError(c, http.StatusBadRequest, "Delta fuera del rango permitido")
+	// SEGURIDAD: las gemas son moneda premium y NUNCA se acuñan desde el cliente.
+	// Solo nacen en el servidor (webhook Stripe, ExchangeCoinsForGems, recompensas
+	// semanales). Ignoramos por completo cualquier delta_gems del request.
+	if req.DeltaCoins > maxDeltaCoinsPerTx {
+		utils.SendError(c, http.StatusBadRequest, "Delta de monedas fuera del rango permitido")
 		return
 	}
 
@@ -46,7 +49,7 @@ func UpdateWallet(c *gin.Context) {
 	db.DB.Where("user_id = ?", userID).FirstOrCreate(&wallet, models.Wallet{UserID: userID})
 
 	wallet.Coins = max(0, min(maxCoinsTotal, wallet.Coins+req.DeltaCoins))
-	wallet.Gems = max(0, min(maxGemsTotal, wallet.Gems+req.DeltaGems))
+	// wallet.Gems NO se modifica aquí: delta_gems del cliente se descarta a propósito.
 	db.DB.Save(&wallet)
 
 	// Notificamos asíncronamente al módulo de Economía de la IA
