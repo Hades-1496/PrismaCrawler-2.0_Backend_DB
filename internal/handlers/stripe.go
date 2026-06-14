@@ -159,27 +159,37 @@ func StripeWebhook(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"received": true})
 }
 
-// pickAllowedOrigin devuelve requestOrigin solo si está en ALLOWED_ORIGIN
-// (lista separada por comas). Si no, devuelve el primer origen permitido; si la
-// variable está vacía, http://localhost:3000.
 func pickAllowedOrigin(requestOrigin string) string {
 	raw := os.Getenv("ALLOWED_ORIGIN")
+	
+	// Si CORS está abierto con "*", podemos fiarnos del Origin del request
+	// siempre que empiece por http, para que Stripe no explote con URLs inválidas.
+	if raw == "*" {
+		if strings.HasPrefix(requestOrigin, "http") {
+			return strings.TrimRight(requestOrigin, "/")
+		}
+		// Fallback seguro si el origin viene vacío en tools como Postman
+		return "http://localhost:3000"
+	}
+
 	if raw == "" {
 		return "http://localhost:3000"
 	}
+	
 	var first string
 	for _, o := range strings.Split(raw, ",") {
 		o = strings.TrimSpace(strings.TrimRight(o, "/"))
 		if o == "" {
 			continue
 		}
-		if first == "" {
+		if first == "" && o != "*" {
 			first = o
 		}
 		if o == strings.TrimRight(requestOrigin, "/") {
 			return o
 		}
 	}
+	
 	if first != "" {
 		return first
 	}
