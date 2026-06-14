@@ -62,7 +62,7 @@ func (r *gameRepository) CreateRun(run *models.GameRun) error {
 
 func (r *gameRepository) GetTopRuns(limit int) ([]models.GameRun, error) {
 	var runs []models.GameRun
-	err := r.db.Preload("Character").
+	err := r.db.Preload("Character.User").
 		Where("status IN ?", []string{"Dead", "Won"}).
 		Order("score desc, current_floor desc, kills desc").
 		Limit(limit).

@@ -50,6 +50,14 @@ type UpdateRoleRequest struct {
 	Role   string `json:"role" binding:"required,oneof=USER ADMIN"`
 }
 
+type UpdateProfileRequest struct {
+	Nickname   string `json:"nickname" binding:"max=32"`
+	RealName   string `json:"real_name" binding:"max=64"`
+	Avatar     string `json:"avatar" binding:"max=128"`
+	PlayerIcon string `json:"player_icon" binding:"max=64"`
+	Role       string `json:"role" binding:"omitempty,oneof=USER ADMIN"`
+}
+
 // --- ECONOMÍA ---
 type UpdateWalletRequest struct {
 	DeltaCoins int `json:"delta_coins"`
@@ -58,6 +66,14 @@ type UpdateWalletRequest struct {
 
 type UpdateGardenRequest struct {
 	Plants string `json:"plants" binding:"required"`
+}
+
+type CreateCheckoutRequest struct {
+	PackageID string `json:"package_id" binding:"required"` // e.g. "gems_500"
+}
+
+type ExchangeCoinsRequest struct {
+	CoinsToSpend int `json:"coins_to_spend" binding:"required,min=1000"` // debe ser múltiplo de 1000
 }
 
 // --- CONOCIMIENTO (RAG / ADMIN) ---

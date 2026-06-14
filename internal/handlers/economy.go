@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	maxDeltaCoinsPerTx = 50_000
-	maxDeltaGemsPerTx  = 5_000
+	maxDeltaCoinsPerTx = 1_000
+	maxDeltaGemsPerTx  = 50
 	maxCoinsTotal      = 10_000_000
 	maxGemsTotal       = 1_000_000
 )
@@ -97,3 +97,52 @@ func UpdateGarden(c *gin.Context) {
 	db.DB.Save(&garden)
 	c.JSON(http.StatusOK, garden)
 }
+
+// ExchangeCoinsForGems convierte monedas a gemas a un costo elevado (1000 monedas = 1 gema)
+func ExchangeCoinsForGems(c *gin.Context) {
+	userID := utils.GetUserID(c)
+	var req ExchangeCoinsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Datos de intercambio inválidos")
+		return
+	}
+
+	if req.CoinsToSpend%1000 != 0 {
+		utils.SendError(c, http.StatusBadRequest, "La cantidad de monedas debe ser múltiplo de 1000")
+		return
+	}
+
+	var wallet models.Wallet
+	db.DB.Where("user_id = ?", userID).FirstOrCreate(&wallet, models.Wallet{UserID: userID})
+
+	if wallet.Coins < req.CoinsToSpend {
+		utils.SendError(c, http.StatusBadRequest, "Monedas insuficientes")
+		return
+	}
+
+	gemsToGive := req.CoinsToSpend / 1000
+
+	wallet.Coins -= req.CoinsToSpend
+	wallet.Gems = min(maxGemsTotal, wallet.Gems+gemsToGive)
+	db.DB.Save(&wallet)
+
+	// Notificamos asíncronamente al módulo de Economía de la IA
+	if AI != nil {
+		go func(uID uint, coins, gems int) {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			payload := map[string]any{
+				"event": "wallet_updated",
+				"data": map[string]any{
+					"user_id": uID,
+					"coins":   coins,
+					"gems":    gems,
+				},
+			}
+			AI.Proxy(ctx, "/api/economy/status", payload)
+		}(userID, wallet.Coins, wallet.Gems)
+	}
+
+	c.JSON(http.StatusOK, wallet)
+}
+

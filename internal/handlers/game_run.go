@@ -6,6 +6,7 @@ import (
 	"prismacrawler/internal/services"
 	"prismacrawler/pkg/db"
 	"prismacrawler/pkg/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -123,8 +124,12 @@ func (h *GameHandler) GetLeaderboard(c *gin.Context) {
 	// Mapeamos los datos para enviar un JSON limpio a Phaser
 	var leaderboard []gin.H
 	for _, run := range runs {
+		playerName := run.Character.Name
+		if run.Character.User.Nickname != "" {
+			playerName = run.Character.User.Nickname
+		}
 		leaderboard = append(leaderboard, gin.H{
-			"playerName":       run.Character.Name,
+			"playerName":       playerName,
 			"class":            run.Character.Class,
 			"score":            run.Score,
 			"floor":            run.CurrentFloor,
@@ -138,9 +143,24 @@ func (h *GameHandler) GetLeaderboard(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"leaderboard": leaderboard})
 }
 
-// GetRuns devuelve el historial de todas las partidas del usuario
+// GetRuns devuelve el historial de todas las partidas del usuario (paginado)
 func (h *GameHandler) GetRuns(c *gin.Context) {
 	userID := utils.GetUserID(c)
+
+	limitVal := 10
+	offsetVal := 0
+
+	if limitParam := c.Query("limit"); limitParam != "" {
+		if val, err := strconv.Atoi(limitParam); err == nil && val > 0 {
+			limitVal = val
+		}
+	}
+	if pageParam := c.Query("page"); pageParam != "" {
+		if val, err := strconv.Atoi(pageParam); err == nil && val > 0 {
+			offsetVal = (val - 1) * limitVal
+		}
+	}
+
 	var runs []models.GameRun
 
 	// Hacemos JOIN para asegurar que la partida le pertenece al usuario a través del personaje
@@ -148,6 +168,8 @@ func (h *GameHandler) GetRuns(c *gin.Context) {
 		Joins("JOIN characters ON characters.id = game_runs.character_id").
 		Where("characters.user_id = ?", userID).
 		Order("game_runs.created_at desc").
+		Limit(limitVal).
+		Offset(offsetVal).
 		Find(&runs)
 
 	c.JSON(http.StatusOK, gin.H{"runs": runs})
@@ -170,4 +192,35 @@ func (h *GameHandler) GetRunByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, run)
+}
+
+// GetEconomyLeaderboard devuelve el top 10 de operadores más ricos
+func (h *GameHandler) GetEconomyLeaderboard(c *gin.Context) {
+	var wallets []models.Wallet
+	err := db.DB.Order("coins desc, gems desc").Limit(10).Find(&wallets).Error
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, "Error al obtener el ranking de economía")
+		return
+	}
+
+	var leaderboard []gin.H
+	for _, wallet := range wallets {
+		var user models.User
+		db.DB.First(&user, wallet.UserID)
+		
+		playerName := "Operador"
+		if user.Nickname != "" {
+			playerName = user.Nickname
+		} else if user.Email != "" {
+			playerName = user.Email
+		}
+
+		leaderboard = append(leaderboard, gin.H{
+			"playerName": playerName,
+			"coins":      wallet.Coins,
+			"gems":       wallet.Gems,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"leaderboard": leaderboard})
 }

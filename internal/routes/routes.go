@@ -16,9 +16,13 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 
 	// Leaderboard PÚBLICO (sin JWT)
 	router.GET("/api/leaderboard", gameHandler.GetLeaderboard)
+	router.GET("/api/leaderboard/economy", gameHandler.GetEconomyLeaderboard)
 
 	// FAQ PÚBLICO (proxea al microservicio de IA)
 	router.POST("/api/faq", handlers.Faq)
+
+	// Stripe Webhook PÚBLICO (valida la firma de Stripe internamente)
+	router.POST("/api/webhooks/stripe", handlers.StripeWebhook)
 
 	// Health check (Ping) PÚBLICO para comprobar que el deploy está funcionando
 	router.GET("/ping", func(c *gin.Context) {
@@ -63,6 +67,7 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 	apiGroup.Use(middlewares.AuthMiddleware())
 	{
 		apiGroup.GET("/profile", handlers.GetProfile)
+		apiGroup.PUT("/profile", handlers.UpdateProfile)
 		apiGroup.POST("/characters", handlers.CreateCharacter)
 		apiGroup.GET("/characters", handlers.GetCharacters)
 		apiGroup.GET("/characters/:id", handlers.GetCharacterByID)
@@ -78,6 +83,8 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 		apiGroup.GET("/maps/:id", handlers.GetMapByID)
 		apiGroup.GET("/wallet", handlers.GetWallet)
 		apiGroup.PUT("/wallet", handlers.UpdateWallet)
+		apiGroup.POST("/wallet/checkout", handlers.CreateStripeCheckout)
+		apiGroup.POST("/wallet/exchange", handlers.ExchangeCoinsForGems)
 		apiGroup.GET("/garden", handlers.GetGarden)
 		apiGroup.PUT("/garden", handlers.UpdateGarden)
 	}
@@ -87,6 +94,7 @@ func Setup(router *gin.Engine, gameHandler *handlers.GameHandler, internalHandle
 	adminGroup.Use(middlewares.AdminMiddleware())
 	{
 		adminGroup.PUT("/role", handlers.UpdateRole)
+		adminGroup.GET("/users", handlers.ListUsers)
 		adminGroup.POST("/discord/changelog", handlers.DiscordChangelog)
 		adminGroup.POST("/discord/test-webhook", handlers.DiscordTestWebhook)
 		adminGroup.POST("/knowledge", handlers.CreateKnowledge)

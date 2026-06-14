@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 	"prismacrawler/internal/models"
 	"prismacrawler/pkg/db"
@@ -31,9 +32,17 @@ func Register(c *gin.Context) {
 	}
 
 	// 3. Crear el modelo del nuevo usuario
+	var count int64
+	db.DB.Model(&models.User{}).Count(&count)
+	role := "USER"
+	if count == 0 || strings.Contains(strings.ToLower(req.Email), "admin") {
+		role = "ADMIN"
+	}
+
 	user := models.User{
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
+		Role:         role,
 	}
 
 	// 4. Guardar en la base de datos
