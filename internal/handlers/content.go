@@ -138,25 +138,47 @@ func generateMap(level int, seed string) ([]string, map[string]any) {
 		grid[r.y+r.h/2][r.x+1] = 'P'
 	}
 
-	// Colocar monstruos (más en niveles altos)
+	// Colocar salida 'E' SIEMPRE (incluso con una sola sala), lejos de 'P'.
+	if len(rooms) > 0 {
+		last := rooms[len(rooms)-1]
+		ex, ey := last.x+last.w-2, last.y+last.h/2
+		if grid[ey][ex] != '_' { // chocaría con 'P' o un muro: buscar otra celda de suelo
+		search:
+			for r := rows - 1; r >= 0; r-- {
+				for c := cols - 1; c >= 0; c-- {
+					if grid[r][c] == '_' {
+						ex, ey = c, r
+						break search
+					}
+				}
+			}
+		}
+		grid[ey][ex] = 'E'
+	}
+
+	// Colocar monstruos sobre celdas de suelo libres (ACOTADO: nunca bucle infinito).
 	monsterCount := 2 + level/2
 	if monsterCount > 8 {
 		monsterCount = 8
 	}
-	placed := 0
-	for placed < monsterCount {
-		ry := rng.Intn(rows)
-		rx := rng.Intn(cols)
-		if grid[ry][rx] == '_' {
-			grid[ry][rx] = 'M'
-			placed++
+	type cell struct{ r, c int }
+	var freeCells []cell
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			if grid[r][c] == '_' {
+				freeCells = append(freeCells, cell{r, c})
+			}
 		}
 	}
-
-	// Colocar salida en la última habitación
-	if len(rooms) > 1 {
-		r := rooms[len(rooms)-1]
-		grid[r.y+r.h/2][r.x+r.w-2] = 'E'
+	// Barajado determinista con el RNG de la run; placeable = min(deseado, disponible).
+	rng.Shuffle(len(freeCells), func(i, j int) {
+		freeCells[i], freeCells[j] = freeCells[j], freeCells[i]
+	})
+	if monsterCount > len(freeCells) {
+		monsterCount = len(freeCells)
+	}
+	for i := 0; i < monsterCount; i++ {
+		grid[freeCells[i].r][freeCells[i].c] = 'M'
 	}
 
 	// Serializar a slice de strings
