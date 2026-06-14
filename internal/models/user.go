@@ -10,7 +10,7 @@ type User struct {
 	Email        string      `gorm:"uniqueIndex;not null"`
 	PasswordHash string      `gorm:"not null"`
 	Role         string      `gorm:"default:'USER'"` // Rol del usuario (ej: USER, ADMIN)
-	Nickname     string      `gorm:"size:32"`
+	Nickname     string      `gorm:"uniqueIndex;not null;size:32"`
 	RealName     string      `gorm:"size:64"`
 	Avatar       string      `gorm:"size:128"`
 	PlayerIcon   string      `gorm:"size:64"`

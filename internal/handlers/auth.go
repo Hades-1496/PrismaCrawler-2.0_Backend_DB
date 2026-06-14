@@ -44,13 +44,13 @@ func Register(c *gin.Context) {
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
 		Role:         role,
+		Nickname:     req.Nickname,
 	}
 
 	// 4. Guardar en la base de datos
 	result := db.DB.Create(&user)
 	if result.Error != nil {
-		// Como pusimos que Email es "uniqueIndex" en el modelo, GORM fallará si ya existe
-		utils.SendError(c, http.StatusConflict, "Este email ya está en uso")
+		utils.SendError(c, http.StatusConflict, "Este email o nickname ya está en uso")
 		return
 	}
 
