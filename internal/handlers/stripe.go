@@ -95,7 +95,7 @@ func StripeWebhook(c *gin.Context) {
 	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
 	signatureHeader := c.GetHeader("Stripe-Signature")
 
-	event, err := webhook.ConstructEvent(payload, signatureHeader, webhookSecret)
+	event, err := webhook.ConstructEventWithOptions(payload, signatureHeader, webhookSecret, webhook.ConstructEventOptions{IgnoreAPIVersionMismatch: true})
 	if err != nil {
 		fmt.Printf("⚠️  Webhook signature verification failed. %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid signature"})

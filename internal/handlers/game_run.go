@@ -81,13 +81,14 @@ func (h *GameHandler) SaveRun(c *gin.Context) {
 
 	// Mapeamos el DTO de HTTP al DTO del Servicio
 	input := services.SaveRunInput{
-		RunID:        req.RunID,
-		CurrentFloor: req.CurrentFloor,
-		Score:        req.Score,
-		CurrentHP:    req.CurrentHP,
-		Kills:        req.Kills,
-		DamageDealt:  req.DamageDealt,
-		DamageTaken:  req.DamageTaken,
+		RunID:          req.RunID,
+		CurrentFloor:   req.CurrentFloor,
+		Score:          req.Score,
+		CurrentHP:      req.CurrentHP,
+		Kills:          req.Kills,
+		DamageDealt:    req.DamageDealt,
+		DamageTaken:    req.DamageTaken,
+		ItemsCollected: req.ItemsCollected,
 	}
 
 	run, err := h.service.SaveRun(c.Request.Context(), userID, input)

@@ -14,7 +14,7 @@ func TestAuthEndpoints(t *testing.T) {
 	router := SetupTestRouter()
 
 	// 1. Probamos el Registro
-	registerPayload := []byte(`{"email": "hero@test.com", "password": "password123"}`)
+	registerPayload := []byte(`{"email": "hero@test.com", "password": "password123", "nickname": "heroTest"}`)
 	reqReg, _ := http.NewRequest(http.MethodPost, "/auth/register", bytes.NewBuffer(registerPayload))
 	reqReg.Header.Set("Content-Type", "application/json") // ¡Importante decirle a Gin que es un JSON!
 
@@ -93,7 +93,7 @@ func TestIntegralFlow(t *testing.T) {
 	router := SetupTestRouter()
 
 	// 1. Registro
-	registerPayload := []byte(`{"email": "integral@test.com", "password": "password123"}`)
+	registerPayload := []byte(`{"email": "integral@test.com", "password": "password123", "nickname": "integralTest"}`)
 	reqReg, _ := http.NewRequest(http.MethodPost, "/auth/register", bytes.NewBuffer(registerPayload))
 	reqReg.Header.Set("Content-Type", "application/json")
 	wReg := httptest.NewRecorder()

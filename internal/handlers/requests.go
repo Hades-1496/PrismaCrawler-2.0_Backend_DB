@@ -25,13 +25,14 @@ type StartRunRequest struct {
 }
 
 type SaveRunRequest struct {
-	RunID        uint `json:"run_id" binding:"required"`
-	CurrentFloor int  `json:"current_floor" binding:"required"`
-	Score        int  `json:"score"`
-	CurrentHP    int  `json:"current_hp"`
-	Kills        int  `json:"kills"`
-	DamageDealt  int  `json:"damage_dealt"`
-	DamageTaken  int  `json:"damage_taken"`
+	RunID          uint     `json:"run_id" binding:"required"`
+	CurrentFloor   int      `json:"current_floor" binding:"required"`
+	Score          int      `json:"score"`
+	CurrentHP      int      `json:"current_hp"`
+	Kills          int      `json:"kills"`
+	DamageDealt    int      `json:"damage_dealt"`
+	DamageTaken    int      `json:"damage_taken"`
+	ItemsCollected []string `json:"items_collected"`
 }
 
 // --- IA / CHATBOT ---

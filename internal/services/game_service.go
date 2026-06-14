@@ -27,13 +27,14 @@ type StartRunInput struct {
 }
 
 type SaveRunInput struct {
-	RunID        uint
-	CurrentFloor int
-	Score        int
-	CurrentHP    int
-	Kills        int
-	DamageDealt  int
-	DamageTaken  int
+	RunID          uint
+	CurrentFloor   int
+	Score          int
+	CurrentHP      int
+	Kills          int
+	DamageDealt    int
+	DamageTaken    int
+	ItemsCollected []string
 }
 
 type GameServiceInterface interface {
@@ -171,6 +172,10 @@ func (s *gameService) SaveRun(ctx context.Context, userID uint, input SaveRunInp
 
 	if err := s.repo.SaveRunAndCharacter(run, &run.Character); err != nil {
 		return nil, err
+	}
+
+	if len(input.ItemsCollected) > 0 {
+		_ = s.repo.AddItemsToRun(run.ID, input.ItemsCollected)
 	}
 
 	// SRP / OCP: Notificamos a los observadores registrados dinámicamente

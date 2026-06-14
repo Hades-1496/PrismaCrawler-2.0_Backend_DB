@@ -13,7 +13,7 @@ func TestEndToEndFlow(t *testing.T) {
 	router := SetupTestRouter()
 
 	// PASO 1 y 2: Registro y Login
-	userPayload := []byte(`{"email": "e2e@test.com", "password": "password123"}`)
+	userPayload := []byte(`{"email": "e2e@test.com", "password": "password123", "nickname": "e2eUser"}`)
 
 	reqReg, _ := http.NewRequest(http.MethodPost, "/auth/register", bytes.NewBuffer(userPayload))
 	router.ServeHTTP(httptest.NewRecorder(), reqReg) // Ejecutamos registro y lo ignoramos

@@ -14,6 +14,7 @@ type GameRepositoryInterface interface {
 	FindMapByID(mapID uint) (*models.Map, error)
 	CreateRun(run *models.GameRun) error
 	GetTopRuns(limit int) ([]models.GameRun, error)
+	AddItemsToRun(runID uint, items []string) error
 }
 
 type gameRepository struct {
@@ -68,4 +69,26 @@ func (r *gameRepository) GetTopRuns(limit int) ([]models.GameRun, error) {
 		Limit(limit).
 		Find(&runs).Error
 	return runs, err
+}
+
+func (r *gameRepository) AddItemsToRun(runID uint, items []string) error {
+	for _, key := range items {
+		var item models.Item
+		// Asumimos que sprite_key o name coinciden con key
+		if err := r.db.Where("sprite_key = ? OR name = ?", key, key).First(&item).Error; err == nil {
+			var runInv models.RunInventory
+			if err := r.db.Where("run_id = ? AND item_id = ?", runID, item.ID).First(&runInv).Error; err == nil {
+				runInv.Quantity++
+				r.db.Save(&runInv)
+			} else {
+				runInv = models.RunInventory{
+					RunID:    runID,
+					ItemID:   item.ID,
+					Quantity: 1,
+				}
+				r.db.Create(&runInv)
+			}
+		}
+	}
+	return nil
 }
