@@ -26,20 +26,20 @@ func CORSMiddleware() gin.HandlerFunc {
 		requestOrigin := c.GetHeader("Origin")
 
 		var responseOrigin string
+		allowCredentials := false
 		switch {
 		case rawEnv == "" || rawEnv == "*":
-			// Sin restricción o comodín: reflejamos el origin del request (o *)
-			if requestOrigin != "" {
-				responseOrigin = requestOrigin
-			} else {
-				responseOrigin = "*"
-			}
+			// Sin allowlist explícita: comodín literal SIN credenciales.
+			// (La auth va por header Authorization: Bearer, no por cookies, así que
+			//  no se necesitan credenciales cross-origin; y "*" + credentials lo
+			//  rechazan los navegadores.)
+			responseOrigin = "*"
 		case allowedSet[requestOrigin]:
-			// El origin del navegador está en la lista permitida
+			// Origen explícitamente permitido: lo reflejamos y permitimos credenciales.
 			responseOrigin = requestOrigin
+			allowCredentials = true
 		default:
-			// No coincide: respondemos con el primer origen permitido
-			// (el preflight fallará en el navegador, que es el comportamiento correcto)
+			// No coincide: devolvemos el primer permitido (el preflight fallará en el navegador).
 			for k := range allowedSet {
 				responseOrigin = k
 				break
@@ -47,7 +47,9 @@ func CORSMiddleware() gin.HandlerFunc {
 		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Origin", responseOrigin)
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		if allowCredentials {
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Internal-Token")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 

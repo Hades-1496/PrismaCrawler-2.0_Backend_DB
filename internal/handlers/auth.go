@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 	"prismacrawler/internal/models"
 	"prismacrawler/pkg/db"
@@ -34,8 +33,10 @@ func Register(c *gin.Context) {
 	// 3. Crear el modelo del nuevo usuario
 	var count int64
 	db.DB.Model(&models.User{}).Count(&count)
+	// Solo el PRIMER usuario registrado es ADMIN (bootstrap). El resto se
+	// promueve de forma segura por un admin existente vía PUT /api/admin/role.
 	role := "USER"
-	if count == 0 || strings.Contains(strings.ToLower(req.Email), "admin") {
+	if count == 0 {
 		role = "ADMIN"
 	}
 

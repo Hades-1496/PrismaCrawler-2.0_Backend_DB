@@ -19,6 +19,9 @@ func main() {
 	if err != nil { // nil es null para pointers, maps, etc.
 		log.Println("Aviso: No se encontró archivo .env. Se leerán las variables de entorno del sistema.")
 	}
+	if os.Getenv("JWT_SECRET") == "" {
+		log.Fatal("FATAL: JWT_SECRET no está configurado. Aborta el arranque por seguridad.")
+	}
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
 		PORT = "8000" // Puerto por defecto si se te olvida ponerlo en el .env

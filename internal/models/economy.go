@@ -22,6 +22,15 @@ type WeeklyReward struct {
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
 
+// ProcessedStripeEvent registra cada evento de webhook de Stripe ya procesado.
+// El índice único sobre EventID garantiza idempotencia: aunque Stripe reentregue
+// el mismo evento, las gemas se acreditan una sola vez.
+type ProcessedStripeEvent struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	EventID   string    `gorm:"uniqueIndex;not null;size:255" json:"event_id"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+}
+
 // Garden guarda el estado del jardín en formato JSON para el frontend
 type Garden struct {
 	ID     uint   `gorm:"primaryKey" json:"id"`
