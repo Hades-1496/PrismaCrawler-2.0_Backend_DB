@@ -62,16 +62,16 @@ func Register(c *gin.Context) {
 	}
 
 	// Disparar evento asíncrono para n8n/IA (Goroutine)
-	go func(userID uint, email string) {
-		// Usamos un context nuevo para que no se cancele al responderle al cliente
+	go func(userID uint, email, nickname string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		payload := gin.H{
 			"event": "user_registered",
 			"payload": gin.H{
-				"user_id": userID,
-				"email":   email,
+				"user_id":  userID,
+				"email":    email,
+				"username": nickname,
 			},
 		}
 		if AI != nil {
@@ -79,7 +79,7 @@ func Register(c *gin.Context) {
 				log.Printf("Error enviando trigger user_registered a IA: %v", err)
 			}
 		}
-	}(user.ID, user.Email)
+	}(user.ID, user.Email, user.Nickname)
 
 	// 5. Responder con éxito (HTTP 201 - Created)
 	c.JSON(http.StatusCreated, gin.H{
@@ -119,5 +119,5 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token, "user_id": user.ID, "email": user.Email, "role": user.Role})
+	c.JSON(http.StatusOK, gin.H{"token": token, "user_id": user.ID, "email": user.Email, "role": user.Role, "nickname": user.Nickname})
 }
