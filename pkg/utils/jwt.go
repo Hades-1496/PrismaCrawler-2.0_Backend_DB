@@ -7,11 +7,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// getSecret recupera el secreto usando variables de entorno o un valor por defecto
+// getSecret recupera el secreto desde la variable de entorno JWT_SECRET.
+// Nunca se firma/valida con un secreto débil conocido: la ausencia de JWT_SECRET
+// es un error de configuración que se detecta al arrancar (main.go).
 func getSecret() []byte {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		return []byte("mi_clave_secreta_super_segura")
+		// Nunca firmar/validar con un secreto débil conocido. La ausencia de
+		// JWT_SECRET es un error de configuración: se valida al arrancar (main.go).
+		panic("JWT_SECRET no está configurado")
 	}
 	return []byte(secret)
 }
@@ -30,7 +34,7 @@ func GenerateToken(userID uint) (string, error) {
 func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return getSecret(), nil
-	})
+	}, jwt.WithValidMethods([]string{"HS256"}))
 
 	if err != nil {
 		return nil, err
