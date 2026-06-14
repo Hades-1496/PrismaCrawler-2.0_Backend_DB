@@ -26,7 +26,8 @@ func SeedData() {
 	items := []models.Item{
 		{Name: "Espada de Hierro", SpriteKey: "item_sword", Description: "+50% Damage", Type: "Weapon", StatsModifier: `{"damageMultiplier": 1.5}`},
 		{Name: "Cerveza de Haste", SpriteKey: "item_beer", Description: "+30% Attack Speed", Type: "Potion", StatsModifier: `{"attackSpeedMultiplier": 1.3}`},
-		{Name: "Poción de Salud", SpriteKey: "item_potion", Description: "Restore 30 HP", Type: "Potion", IsConsumable: true, StatsModifier: `{"heal": 30}`},
+		{Name: "Poción de Salud", SpriteKey: "item_potion", Description: "Restore 50 HP", Type: "Potion", IsConsumable: true, StatsModifier: `{"heal": 50}`},
+		{Name: "Poción Pequeña", SpriteKey: "item_potion_small", Description: "Restore 25 HP", Type: "Potion", IsConsumable: true, StatsModifier: `{"heal": 25}`},
 		{Name: "Té Enfermizo", SpriteKey: "item_tea", Description: "Velocidad +10%", Type: "Potion", StatsModifier: `{"speedMultiplier": 1.1}`},
 		{Name: "Sack of Weight", SpriteKey: "item_sack", Description: "-50% Speed, +50 HP", Type: "Accessory", StatsModifier: `{"speedMultiplier": 0.5, "maxHpBoost": 50}`},
 		{Name: "Armadura de Cuero", SpriteKey: "item_armor", Description: "Protección ligera (+10 Vida Máxima).", Type: "Armor", StatsModifier: `{"hp": 10}`},
