@@ -9,11 +9,13 @@ import (
 	"prismacrawler/pkg/db"
 	"prismacrawler/pkg/utils"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/checkout/session"
 	"github.com/stripe/stripe-go/v78/webhook"
+	"gorm.io/gorm"
 )
 
 // Map of package IDs to Gem amounts and prices (in cents)
@@ -46,14 +48,11 @@ func CreateStripeCheckout(c *gin.Context) {
 		return
 	}
 
-	// Assuming the frontend will be running on a certain origin, but fallback to localhost
-	origin := c.Request.Header.Get("Origin")
-	if origin == "" {
-		origin = "http://localhost:3000"
-	}
+	// El Origin de redirección DEBE estar en la allowlist (misma que CORS),
+	// para que Stripe no redirija tras el pago a un dominio arbitrario del atacante.
+	origin := pickAllowedOrigin(c.Request.Header.Get("Origin"))
 
 	params := &stripe.CheckoutSessionParams{
-		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
@@ -126,14 +125,63 @@ func StripeWebhook(c *gin.Context) {
 				return
 			}
 
-			// Add gems to user's wallet
-			var wallet models.Wallet
-			db.DB.Where("user_id = ?", uint(userID)).FirstOrCreate(&wallet, models.Wallet{UserID: uint(userID)})
-			wallet.Gems += amount
-			db.DB.Save(&wallet)
-			fmt.Printf("✅ Added %d Gems to user %d via Stripe\n", amount, userID)
+			// Idempotencia: si ya procesamos este evento, no acreditamos de nuevo.
+			var already models.ProcessedStripeEvent
+			if err := db.DB.Where("event_id = ?", event.ID).First(&already).Error; err == nil {
+				fmt.Printf("↩️  Stripe event %s ya procesado; ignorando duplicado\n", event.ID)
+				c.JSON(http.StatusOK, gin.H{"received": true, "duplicate": true})
+				return
+			}
+
+			// Transacción: registrar el evento (índice único = guardia anti-carrera)
+			// e incrementar gemas de forma atómica.
+			txErr := db.DB.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(&models.ProcessedStripeEvent{EventID: event.ID}).Error; err != nil {
+					return err // violación de índice único (carrera) → reintentará
+				}
+				var wallet models.Wallet
+				if err := tx.Where(models.Wallet{UserID: uint(userID)}).
+					FirstOrCreate(&wallet).Error; err != nil {
+					return err
+				}
+				return tx.Model(&wallet).
+					UpdateColumn("gems", gorm.Expr("gems + ?", amount)).Error
+			})
+			if txErr != nil {
+				fmt.Printf("⚠️  Error acreditando gemas (evento %s): %v\n", event.ID, txErr)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "credit failed"})
+				return
+			}
+			fmt.Printf("✅ Added %d Gems to user %d via Stripe (event %s)\n", amount, userID, event.ID)
 		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"received": true})
+}
+
+// pickAllowedOrigin devuelve requestOrigin solo si está en ALLOWED_ORIGIN
+// (lista separada por comas). Si no, devuelve el primer origen permitido; si la
+// variable está vacía, http://localhost:3000.
+func pickAllowedOrigin(requestOrigin string) string {
+	raw := os.Getenv("ALLOWED_ORIGIN")
+	if raw == "" {
+		return "http://localhost:3000"
+	}
+	var first string
+	for _, o := range strings.Split(raw, ",") {
+		o = strings.TrimSpace(strings.TrimRight(o, "/"))
+		if o == "" {
+			continue
+		}
+		if first == "" {
+			first = o
+		}
+		if o == strings.TrimRight(requestOrigin, "/") {
+			return o
+		}
+	}
+	if first != "" {
+		return first
+	}
+	return "http://localhost:3000"
 }
