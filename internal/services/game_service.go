@@ -63,22 +63,26 @@ func (o *AIGameObserver) OnSaveRun(run *models.GameRun, currentHP int, hpDropped
 		return
 	}
 	if currentHP <= 0 {
-		go func(runID uint, charName string, score, floor int) {
+		go func(runID uint, username, charName, status string, score, floor, damageDealt, damageTaken int) {
 			ctxBg, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			payload := map[string]any{
 				"event": "game_run_ended",
 				"payload": map[string]any{
-					"run_id":    runID,
-					"character": charName,
-					"score":     score,
-					"floor":     floor,
+					"run_id":       runID,
+					"username":     username,
+					"character":    charName,
+					"status":       status,
+					"score":        score,
+					"floor":        floor,
+					"damage_dealt": damageDealt,
+					"damage_taken": damageTaken,
 				},
 			}
 			if _, err := o.ai.Proxy(ctxBg, "/api/n8n/relay", payload); err != nil {
 				log.Printf("Error enviando trigger game_run_ended a IA: %v", err)
 			}
-		}(run.ID, run.Character.Name, run.Score, run.CurrentFloor)
+		}(run.ID, run.Character.User.Nickname, run.Character.Name, run.Status, run.Score, run.CurrentFloor, run.DamageDealt, run.DamageTaken)
 	} else if floorChanged || hpDropped {
 		go func(runID uint, charName string, floor, hp int) {
 			ctxBg, cancel := context.WithTimeout(context.Background(), 5*time.Second)

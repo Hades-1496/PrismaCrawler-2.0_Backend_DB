@@ -132,11 +132,9 @@ func gemsForRank(rank int) int {
 	case rank == 1:
 		return 50
 	case rank == 2:
-		return 40
-	case rank == 3:
-		return 30
-	case rank <= 5:
 		return 20
+	case rank == 3:
+		return 15
 	default:
 		return 10
 	}
@@ -172,7 +170,7 @@ func (h *InternalHandler) DistributeWeeklyRewards(c *gin.Context) {
 	// Mejores runs de la semana. Pedimos margen (50) para luego deduplicar por usuario:
 	// un mismo operador no puede ocupar varias posiciones del podio.
 	var topRuns []models.GameRun
-	if err := db.DB.Preload("Character").
+	if err := db.DB.Preload("Character.User").
 		Where("created_at >= ? AND created_at < ?", weekStart, weekEnd).
 		Order("score DESC, current_floor DESC").
 		Limit(50).
@@ -210,8 +208,13 @@ func (h *InternalHandler) DistributeWeeklyRewards(c *gin.Context) {
 		wallet.Gems += gems
 		db.DB.Save(&wallet)
 
+		nickname := run.Character.User.Nickname
+		if nickname == "" {
+			nickname = run.Character.Name
+		}
 		awarded = append(awarded, gin.H{
 			"user_id":        uid,
+			"nickname":       nickname,
 			"character_name": run.Character.Name,
 			"rank":           rank,
 			"gems":           gems,

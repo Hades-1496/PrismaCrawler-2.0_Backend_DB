@@ -27,7 +27,7 @@ func NewGameRepository(db *gorm.DB) GameRepositoryInterface {
 
 func (r *gameRepository) FindRunByIDWithCharacter(id uint) (*models.GameRun, error) {
 	var run models.GameRun
-	err := r.db.Preload("Character").First(&run, id).Error
+	err := r.db.Preload("Character.User").First(&run, id).Error
 	return &run, err
 }
 
